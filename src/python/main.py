@@ -1,8 +1,9 @@
 import sqlite3
+import os
 
 from verifyDB import verifyDB
 
-database = "src\sql\database.db"
+database = os.path.join("src", "sql", "database.db")
 
 conn = sqlite3.connect(database)
 cursor = conn.cursor()
