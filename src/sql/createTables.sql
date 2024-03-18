@@ -21,9 +21,9 @@ CREATE TABLE Rad (
 CREATE TABLE Stol (
     id INTEGER PRIMARY KEY,
     stol_nr INTEGER NOT NULL,
-    rad_id INTEGER NOT NULL,
-    UNIQUE (stol_nr, rad_id),
-    FOREIGN KEY (rad_id) REFERENCES Rad(id)
+    rad INTEGER NOT NULL,
+    UNIQUE (stol_nr, rad),
+    FOREIGN KEY (rad) REFERENCES Rad(id)
 );
 
 CREATE TABLE Teaterstykket (

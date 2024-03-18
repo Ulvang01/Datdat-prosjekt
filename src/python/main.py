@@ -2,6 +2,7 @@ import sqlite3
 import os
 
 from verifyDB import verifyDB
+from populateDB import populateDB
 
 database = os.path.join("src", "sql", "database.db")
 
@@ -10,4 +11,4 @@ cursor = conn.cursor()
 
 if __name__ == "__main__":
     verifyDB(conn)
-
+    populateDB(conn)

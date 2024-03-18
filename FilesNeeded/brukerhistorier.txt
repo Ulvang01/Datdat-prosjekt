@@ -1,0 +1,33 @@
+1. Vi ønsker å sette inn de to salene nevnt over, sammen med stoler,
+teaterstykker, forestillinger, akter, roller, skuespillere og andre medvirkende,
+slik det er beskrevet i teksten over. Dette kan implementeres i SQL.
+
+2. Med oppgaven er det lagt ut noen filer som beskriver hvilke stoler som
+allerede er solgt til noen forestillinger. Her skal det lages Pythonprogram som
+leser filene og setter inn hvilke stoler som er solgt. Det er OK å sette inn
+stolene basert på disse filene også. Her er det ok at kjøper av de allerede
+solgte stolene er en standardbruker. dvs. samme forhåndsinnsatte bruker.
+
+3. Her skal du kjøpe 9 voksenbilletter til forestillingen for Størst av alt er
+kjærligheten 3. februar, hvor det er 9 ledige billetter og hvor stolene er på
+samme rad. Stolene trenger ikke være ved siden av hverandre. Vi ønsker å få
+summert hva det koster å kjøpe disse billettene, men du trenger ikke ta
+hensyn til selve betalingen, den antar vi skjer på et annet system som dere
+ikke trenger å lage. Denne funksjonen skal implementeres i Python og SQL.
+
+4. Her skal du implementere et Pythonprogram (med bruk av SQL) som tar inn
+en dato og skriver ut hvilke forestillinger som finnes på denne datoen og lister
+opp hvor mange billetter (dvs. stoler) som er solgt. Ta også med forestillinger
+hvor det ikke er solgt noen billetter.
+
+5. Vi ønsker å lage et query i SQL som finner hvilke (navn på) skuespillere som
+opptrer i de forskjellige teaterstykkene. Skriv ut navn på teaterstykke, navn på
+skuespiller og rolle.
+
+6. Vi ønsker å lage et query i SQL som finner hvilke forestillinger som har solgt
+best. Skriv ut navn på forestilling og dato og antall solgte plasser sortert på
+antall plasser i synkende rekkefølge.
+
+7. Du skal lage et Pythonprogram (og SQL) som tar et skuespillernavn og finner
+hvilke skuespilllere de har spilt med i samme akt. Skriv ut navn på begge og
+hvilket skuespill det skjedde
