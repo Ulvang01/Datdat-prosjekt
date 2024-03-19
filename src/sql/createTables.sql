@@ -27,7 +27,7 @@ CREATE TABLE Stol (
 );
 
 CREATE TABLE Teaterstykket (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     navn VARCHAR(255) NOT NULL,
     forfatter VARCHAR(255) NOT NULL,
     sal VARCHAR(255) NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE Teaterstykket (
 );
 
 CREATE TABLE Visning (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     dato DATE NOT NULL,
     teaterstykket INTEGER NOT NULL,
     FOREIGN KEY (teaterstykket) REFERENCES Teaterstykket(id),
@@ -45,14 +45,14 @@ CREATE TABLE Visning (
 );
 
 CREATE TABLE Kundeprofil (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     navn VARCHAR(255) NOT NULL,
     telefon INTEGER NOT NULL UNIQUE,
     adresse VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE BilletKjøp (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     kunde INTEGER NOT NULL,
     dato DATE NOT NULL,
     tid TIME NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE BillettPris (
 );
 
 CREATE TABLE Billett (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     vising INTEGER NOT NULL,
     sete INTEGER NOT NULL,
     kjøp INTEGER NOT NULL,
@@ -82,12 +82,12 @@ CREATE TABLE Billett (
 );
 
 CREATE TABLE Skuespiller (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     navn VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE Roller (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     navn VARCHAR(255) NOT NULL
 );
 
@@ -100,10 +100,10 @@ CREATE TABLE SkuespillerRolleJunction (
 );
 
 CREATE TABLE Akt (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     nummer INTEGER NOT NULL,
-    teaterstykket INTEGER NOT NULL,
     navn VARCHAR(255),
+    teaterstykket INTEGER NOT NULL,
     FOREIGN KEY (teaterstykket) REFERENCES Teaterstykket(id),
     UNIQUE (nummer, teaterstykket)
 );
@@ -117,7 +117,7 @@ CREATE TABLE RolleAkterJunction (
 );
 
 CREATE TABLE Medvirkende (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     navn VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     ansatt_status VARCHAR(255) NOT NULL,
@@ -135,7 +135,7 @@ CREATE TABLE StillingsTittel (
 );
 
 CREATE TABLE Oppgave (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     navn VARCHAR(255) NOT NULL,
     beskrivelse VARCHAR(255) NOT NULL,
     teaterstykket INTEGER NOT NULL,

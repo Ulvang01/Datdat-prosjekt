@@ -23,7 +23,7 @@ def verifyHovedscene(cursor):
         cursor.execute("BEGIN;")
         
         hovedScene = Sal("Hovedscene")
-        hovedScene.insert_if_not_exists(cursor)
+        hovedScene.insert(cursor)
         
         with open(hovedScenePath, 'r') as file:
             print("Reading hovedscene...")
@@ -103,7 +103,7 @@ def verifyGameleScene(cursor):
         cursor.execute("BEGIN;")
         
         gamleScene = Sal("Gamle-scene")
-        gamleScene.insert_if_not_exists(cursor)
+        gamleScene.insert(cursor)
         
         with open(gamleScenePath, 'r') as file:
             print("Reading gamle scene...")
