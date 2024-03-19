@@ -323,6 +323,17 @@ class Teaterstykket():
         """
         values = [(teaterstykket.navn, teaterstykket.forfatter, teaterstykket.tid) for teaterstykket in teaterstykke_list]
         cursor.executemany(query, values)
+    
+    @staticmethod
+    def get_by_name(cursor: sqlite3.Cursor, name: str):
+        query = """
+        SELECT * FROM Teaterstykket WHERE navn = ?
+        """
+        cursor.execute(query, (name,))
+        teaterstykket = cursor.fetchone()
+        if teaterstykket:
+            return Teaterstykket(teaterstykket[0], teaterstykket[1], teaterstykket[2], teaterstykket[3], teaterstykket[4])
+        return None
 
 
 class Visning():
@@ -702,6 +713,28 @@ class Skuespiller():
         """
         values = [(skuespiller.navn,) for skuespiller in skuespiller_list]
         cursor.executemany(query, values)
+    
+    @staticmethod
+    def get_all_by_play(cursor: sqlite3.Cursor, teaterstykketId: int):
+        query = """
+        SELECT * FROM Skuespiller WHERE id = (
+          SELECT (id) FROM SkuespillerRolleJunction WHERE rolle = (
+            SELECT (id) FROM RolleAkterJunction WHERE akt = (
+              SELECT (id) FROM Akt WHERE teaterstykket = ?
+            )
+          )
+        )
+        """
+        cursor.execute(query, (teaterstykketId,))
+        rows = cursor.fetchall()
+        actors = []
+        if rows:
+            for row in rows:
+                actors.append(Skuespiller(row[0], row[1]))
+            return actors
+        return None
+
+
 
     
 class Roller():
