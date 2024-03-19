@@ -1,2 +1,3 @@
  - Hvis det er forskjell mellom lista over roller i oppgaven og nettsiden så brukes de fra nettsiden 
    og hvis det er roller på nettsiden som ikke er i oppgaven så er de bare med i første akt.
+ - Ansvarlig direktør av teateret lagres som <fin løsning>
