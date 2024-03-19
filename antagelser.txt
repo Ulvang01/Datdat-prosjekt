@@ -1,3 +1,6 @@
  - Hvis det er forskjell mellom lista over roller i oppgaven og nettsiden så brukes de fra nettsiden 
    og hvis det er roller på nettsiden som ikke er i oppgaven så er de bare med i første akt.
  - Ansvarlig direktør av teateret lagres som <fin løsning>
+ - Alle medvirkende er antatt fulltidsansatte siden det ikke står noe sted.
+ - Databaser inneholder bare oppgavene som står på nettsiden, og disse er standarisert. 
+   Eks. Musikkutgivelse fra kongsemnene endres til å følge Musikalsk ansvarlig.
