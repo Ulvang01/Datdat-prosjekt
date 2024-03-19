@@ -4,12 +4,13 @@ Dagfinn Bonde : 1, 2, 3, 4, 5
 Jatgeir Skald : 4
 Sigrid (Skules søster) : 1, 2, 5
 Ingebjørg : 4
-Guttorm Ingesson : 1
+Baard Bratte : 1
 Skule jarl : 1, 2, 3, 4, 5
-Inga fra Vartejg : 1, 3
+Inga fra Vartejg (Haakons mor) : 1, 3
 Paal Flida : 1, 2, 3, 4, 5
 Fru Ragnhild (Skules hustru) : 1, 5
 Gregorius Jonssønn : 1, 2, 3, 4, 5
 Margrete (Skules datter) : 1, 2, 3, 4, 5
 Biskop Nikolas : 1, 2, 3
 Peter (prest og Ingebjørgs sønn) : 3, 4, 5
+Trønder : 1

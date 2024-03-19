@@ -6,6 +6,7 @@ from datetime import datetime
 
 avspillingPath = os.path.join("src", "res", "avspillingsdager.txt")
 kongsemnenePirsPath = os.path.join("src", "res", "priser-Kongsemnene.txt")
+
 kongsemneneMedvirkendePath = os.path.join("src", "res", "skuespillere-Kongsemnene.txt")
 størstAvAltErKjærlighetenPirsPath = os.path.join('src', 'res', 'priser-Størst_av_alt_er_kjærligheten.txt')
 størstAvAltErKjærlighetenMedvirkendePath = os.path.join('src', 'res', 'skuespillere-Størst_av_alt_er_kjærligheten.txt')
