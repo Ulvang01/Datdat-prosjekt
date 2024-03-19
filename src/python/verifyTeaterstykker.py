@@ -1,7 +1,7 @@
 import re
 import os
 
-from models import Sal, Teaterstykket, Visning, BillettPris, Akt, Skuespiller, Roller, SkuespillerRolleJunction, RolleAkterJunction
+from src.python.models import Sal, Teaterstykket, Visning, BillettPris, Akt, Skuespiller, Roller, SkuespillerRolleJunction, RolleAkterJunction
 from datetime import datetime
 
 avspillingPath = os.path.join("src", "res", "avspillingsdager.txt")

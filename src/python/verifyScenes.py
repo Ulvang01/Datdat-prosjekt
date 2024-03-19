@@ -1,4 +1,4 @@
-from models import Sal, Område, Rad, Stol
+from src.python.models import Sal, Område, Rad, Stol
 import re
 import os
 
