@@ -323,7 +323,9 @@ class Teaterstykket():
         """
         cursor.execute(query, (name,))
         teaterstykket = cursor.fetchone()
-        return Teaterstykket(teaterstykket[0], teaterstykket[1], teaterstykket[2], teaterstykket[3], teaterstykket[4])
+        if teaterstykket:
+            return Teaterstykket(teaterstykket[0], teaterstykket[1], teaterstykket[2], teaterstykket[3], teaterstykket[4])
+        return None
 
 
 class Visning():
@@ -718,9 +720,12 @@ class Skuespiller():
         cursor.execute(query, (teaterstykketId,))
         rows = cursor.fetchall()
         actors = []
-        for row in rows:
-            actors.append(Skuespiller(row[0], row[1]))
-        return actors
+        if rows:
+            for row in rows:
+                actors.append(Skuespiller(row[0], row[1]))
+            return actors
+        return None
+
 
 
     
