@@ -22,12 +22,13 @@ def main():
             print("\nThe following arguments are available:")
             print(" - verify  --> Verify the database and populate it with some data.")
             print(" - getActorsByPlay <name of play>  --> Get all actors in a given play.")
-        if inp == 'verify':
+            print(" - getPlaysByDate <yyyy-mm-dd>  --> Get all plays on a given date.")
+        elif inp == 'verify':
             verifyDB(conn)
             verifyScenes(conn)
             verifyTeaterstykkene(conn)
             conn.commit()
-        if inp.split(' ')[0] == 'getActorsByPlay': 
+        elif inp.split(' ')[0] == 'getActorsByPlay': 
             play = Teaterstykket.get_by_name(cursor, inp.split(' ')[1])
             if not play:
                 print('Play does not exist.')
@@ -35,6 +36,13 @@ def main():
             actors = Skuespiller.get_all_by_play(cursor, play.id)
             for actor in actors: 
                 print(actor.__str__())
+        elif inp.split(' ')[0] == 'getPlaysOnDate':
+            plays = Teaterstykket.get_plays_on_date(cursor, inp.split(' ')[1])
+            if not plays:
+                print('No plays on given date. Date format should be yyyy-mm-dd.')
+                continue
+            for play in plays:
+                print(play.__str__())
     
     conn.close()
 if __name__ == "__main__":
