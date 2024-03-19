@@ -154,14 +154,12 @@ class Rad:
         return rader
     
     @staticmethod
-    def get_by_område(cursor: sqlite3.Cursor, område: Område) -> List['Rad']:
-        query = "SELECT * FROM Rad WHERE område = ?"
-        cursor.execute(query, (område.id,))
-        rows = cursor.fetchall()
-        rader = []
-        for row in rows:
-            rader.append(Rad(row[0], row[1], område))
-        return rader
+    def get_by_område_and_radnr(cursor: sqlite3.Cursor, område: Område, radnr: int) -> List['Rad']:
+        query = "SELECT * FROM Rad WHERE område = ? AND radnr = ?"
+        cursor.execute(query, (område.id, radnr))
+        rows = cursor.fetchone()
+        rad = Rad(rows[0], radnr, område)
+        return rad
     
     @staticmethod
     def get_by_sal(cursor: sqlite3.Cursor, sal: Sal) -> List['Rad']:
@@ -1120,7 +1118,6 @@ class Medvirkende():
         INSERT INTO Medvirkende (id, navn, email, ansatt_status) VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        print("Inserting:", self)
         cursor.execute(query, (self.id, self.navn, self.email, self.status.status))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
@@ -1151,7 +1148,6 @@ class Medvirkende():
         query = "SELECT * FROM Medvirkende WHERE navn = ?"
         cursor.execute(query, (navn,))
         row = cursor.fetchone()
-        print("Row:", row, "Navn:", navn)
         if row:
             status = AnsattStatus(row[3])
             return Medvirkende(row[0], row[1], row[2], status)
@@ -1194,7 +1190,6 @@ class OppgaveMedvirkendeJunctoin():
         INSERT INTO OppgaveMedvirkendeJunctoin (medvirkende, oppgave) VALUES (?, ?)
         ON CONFLICT(medvirkende, oppgave) DO NOTHING
         """
-        print("Inserting:", self.medvirkende.id, self.oppgave.id)
         cursor.execute(query, (self.medvirkende.id, self.oppgave.id))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
