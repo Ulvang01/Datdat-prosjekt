@@ -174,7 +174,7 @@ def verifyGameleScene(cursor):
         return
 
 def verifyScenes(conn):
-    '''Populate the database with some data'''
+    '''Populate databasen with some data'''
     cursor = conn.cursor()
     verifyHovedscene(cursor)
     verifyGameleScene(cursor)
