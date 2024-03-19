@@ -49,8 +49,6 @@ def verifyMedvirkende(cursor):
                     oppgave = Oppgave(None, o.strip(), Teaterstykket.get_by_name(cursor, content[i][2].strip()))
                     oppgave.insert(cursor)
                     oppgave = Oppgave.get_by_name_and_teaterstykket(cursor, oppgave.navn, oppgave.teaterstykket)
-                print("Junction oppgave :", oppgave)
-                print("Junction medvirkende :", medvirkende)
                 junction = OppgaveMedvirkendeJunctoin(medvirkende, oppgave)
                 junction.insert(cursor)
 
