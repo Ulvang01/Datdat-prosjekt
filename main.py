@@ -4,6 +4,7 @@ import os
 from src.python.verifyTeaterstykker import verifyTeaterstykkene
 from src.python.verifyDB import verifyDB
 from src.python.verifyScenes import verifyScenes
+from src.python.verifyMedvirkende import verifyMedvirkendeAndStatus
 
 database = os.path.join("src", "sql", "database.db")
 
@@ -24,6 +25,7 @@ def main():
             verifyDB(conn)
             verifyScenes(conn)
             verifyTeaterstykkene(conn)
+            verifyMedvirkendeAndStatus(conn)
             conn.commit()
     
     conn.close()
