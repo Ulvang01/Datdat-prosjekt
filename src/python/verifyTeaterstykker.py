@@ -6,9 +6,9 @@ from datetime import datetime
 
 avspillingPath = os.path.join("src", "res", "avspillingsdager.txt")
 kongsemnenePirsPath = os.path.join("src", "res", "priser-Kongsemnene.txt")
-kongsemneneMedvirkendePath = os.path.join("src", "res", "medvirkende-Kongsemnene.txt")
+kongsemneneMedvirkendePath = os.path.join("src", "res", "skuespillere-Kongsemnene.txt")
 størstAvAltErKjærlighetenPirsPath = os.path.join('src', 'res', 'priser-Størst_av_alt_er_kjærligheten.txt')
-størstAvAltErKjærlighetenMedvirkendePath = os.path.join('src', 'res', 'medvirkende-Størst_av_alt_er_kjærligheten.txt')
+størstAvAltErKjærlighetenMedvirkendePath = os.path.join('src', 'res', 'skuespillere-Størst_av_alt_er_kjærligheten.txt')
 rollerKongsemnene = os.path.join("src", "res", "roller-Kongsemnene.txt")
 rollerStørstAvAltErKjærlighten = os.path.join('src', 'res', 'roller-Størst_av_alt_er_kjærligheten.txt')
 
@@ -195,4 +195,5 @@ def verifyTeaterstykkene(conn):
     verifyKongsemnene(cursor)
     verifyStørstAvAltErKjærligheten(cursor)
     conn.commit()
+    print('Teaterstykker verified')
     return
