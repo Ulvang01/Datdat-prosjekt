@@ -1,8 +1,11 @@
 import re
+import os
 
 def getSqlStatements() -> list[str]:
     global statements
-    with open('src/sql/createTables.sql', 'r') as file:
+
+    path = os.path.join("src", "sql", "createTables.sql")
+    with open(path, 'r') as file:
         content = file.read()
     statements = [s.strip() for s in content.split(';') if s.strip()]
     return statements

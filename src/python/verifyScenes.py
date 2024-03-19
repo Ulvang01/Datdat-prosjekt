@@ -1,107 +1,99 @@
 from models import Sal, Område, Rad, Stol
 import re
+import os
+
+hovedScenePath = os.path.join("src", "res", "hovedscenen.txt")
+
+
+def processOmråde(content, scene, cursor):
+    område_list = []
+
+    for row in content:
+        if not bool(re.search(r'\d', row)) and row.strip() != "":
+            område_list.append(Område(None, row.strip(), scene))
+
+    Område.upsert_batch(cursor, område_list)
+    return Område.get_by_sal(cursor, scene)
 
 def verifyHovedscene(cursor):
     '''Verify the database with the hovedsal'''
     print("Verifying hovedscene...")
-    hovedscene = Sal("hovedscene")
-    cursor.execute(hovedscene.get())
-    if cursor.fetchone() is None:
-        cursor.execute(hovedscene.insert())
 
-    with open('FilesNeeded/hovedscenen.txt', 'r') as file:
-        content = file.readlines()
+    try:
+        cursor.execute("BEGIN;")
+        
+        hovedScene = Sal("Hovedscene")
+        hovedScene.insert_if_not_exists(cursor)
+        
+        with open(hovedScenePath, 'r') as file:
+            print("Reading hovedscene...")
+            content = file.readlines()[1:]
 
-    content = content[1:]
-    current_område = None
-    område_counter = 0
-    rad_counter = 0
-    stol_counter = 0
+        område_list = processOmråde(content, hovedScene, cursor)
+        content = content[::-1]
 
-    all_områder_db = cursor.execute(Område.get_all()).fetchall()
-    all_rad_db = cursor.execute(Rad.get_all()).fetchall()
-    all_stol_db = cursor.execute(Stol.get_all()).fetchall()
-    print(all_stol_db)
+        område_count = 0
+        rad_list = []
+        rad_count = 1
+        for i in range(len(content)):
+            if bool(re.fullmatch(r'[A-Za-z]+', content[i].strip())):
+                område_count += 1
+                rad_count = 1
+            else:
+                rad_list.append(Rad(None, rad_count, område_list[område_count]))
+                rad_count += 1
 
-    all_områder = []
-    print("Getting all områder...")
-    for område in all_områder_db:
-        gameltOmråde = Område(område[0], område[1], område[2])
-        all_områder.append(gameltOmråde)
+        Rad.upsert_batch(cursor, rad_list)
+        all_rads = Rad.get_by_sal(cursor, hovedScene)
 
-    print("Verifying områder...")
-    for row in content:
-        hasDigit = bool(re.search(r'\d', row))
-        if not hasDigit and row.strip() != "":
-            current_område = Område(område_counter, row.strip(), hovedscene)
-            exist = False
-            for område in all_områder:
-                if current_område.navn == område.navn and current_område.sal.navn == område.sal and current_område.id == område.id:
-                    current_område = område
-                    exist = True
-                    break
-            if not exist:
-                cursor.execute(current_område.insert())
-                all_områder.append(current_område)
-            område_counter += 1
 
-    content = content[::-1]
-    område_counter = 0
-    current_område = all_områder[område_counter]
-    all_rad = []
-    print("Getting all rad...")
-    for rad in all_rad_db:
-        for område in all_områder:
-            if rad[2] == område.navn:
-                gamelRad = Rad(rad[0], rad[1], område)
-                all_rad.append(gamelRad)
-                break
-    
-    all_stol = []
-    print("Getting all stol...")
-    for stol in all_stol_db:
-        for rad in all_rad:
-            if stol[2] == rad.id:
-                gamelStol = Stol(stol[0], stol[1], rad)
-                all_stol.append(gamelStol)
-                print(gamelStol)
-                break
-    
-    print("Verifying rad and stol...")
-    for row in content:
-        row = row.strip()
-        hasDigit = bool(re.search(r'\d', row))
-        if not hasDigit and row.strip() != "":
-            current_område = all_områder[område_counter]
-            område_counter += 1
-        elif hasDigit and row.strip() != "":
-            current_rad = Rad(rad_counter, rad_counter + 1, current_område)
-            exist = False
-            for rad in all_rad:
-                if current_rad.radnr == rad.radnr and current_rad.område.navn == rad.område.navn and current_rad.id == rad.id:
-                    current_rad = rad
-                    exist = True
-                    break
-            if not exist:
-                cursor.execute(current_rad.insert())
-                all_rad.append(current_rad)
-            rad_counter += 1
-            for i in range(1, len(row.strip()) + 1):
-                if row[i - 1] == "x":
-                    stol_counter += 1
-                    continue
-                current_stol = Stol(stol_counter, stol_counter + 1, current_rad)
-                exist = False
-                for stol in all_stol:
-                    if current_stol.stolnr == stol.stolnr and current_stol.rad.radnr == stol.rad.radnr and current_stol.rad.område.navn == stol.rad.område.navn and current_stol.id == stol.id:
-                        current_stol = stol
-                        exist = True
-                        break
-                if not exist:
-                    print(stol)
-                    cursor.execute(current_stol.insert())
-                    all_stol.append(current_stol)
-                stol_counter += 1
+        stol_list = []
+        stol_count = 1
+        rad_count = 0
+        område_count = 0
+        for i in range(len(content)):
+            if bool(re.fullmatch(r'[A-Za-z]+', content[i].strip())):
+                område_count += 1
+            else:
+                for j in range(len(content[i].strip())):
+                    if content[i][j] != 'x':
+                        stol_list.append(Stol(None, stol_count, all_rads[rad_count]))
+                    stol_count += 1
+                rad_count += 1
+        Stol.upsert_batch(cursor, stol_list)
+
+        if len(område_list) != len(Område.get_by_sal(cursor, hovedScene)):
+            for db_område in Område.get_by_sal(cursor, hovedScene):
+                should_delete = True
+                for txt_område in område_list:
+                    if db_område.navn == txt_område.navn and db_område.sal == txt_område.sal:
+                        should_delete = False
+                if should_delete:
+                    db_område.delete(cursor)
+        
+        if len(rad_list) != len(Rad.get_by_sal(cursor, hovedScene)):
+            for db_rad in Rad.get_by_sal(cursor, hovedScene):
+                should_delete = True
+                for txt_rad in rad_list:
+                    if db_rad.radnr == txt_rad.radnr and db_rad.område == txt_rad.område:
+                        should_delete = False
+        
+        if len(stol_list) != len(Stol.get_by_sal(cursor, hovedScene)):
+            for db_stol in Stol.get_by_sal(cursor, hovedScene):
+                should_delete = True
+                for txt_stol in stol_list:
+                    if db_stol.stolnr == txt_stol.stolnr and db_stol.rad.id == txt_stol.rad.id:
+                        should_delete = False
+                if should_delete:
+                    db_stol.delete(cursor)
+
+        cursor.execute("COMMIT;")
+        print("Hovedscene verified.")
+    except Exception as e:
+        print("Failed to verify hovedscene.")
+        print(e)
+        cursor.execute("ROLLBACK;")
+        return
 
 
 def verifyScenes(conn):
