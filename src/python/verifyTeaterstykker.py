@@ -7,7 +7,7 @@ from datetime import datetime
 avspillingPath = os.path.join("src", "res", "avspillingsdager.txt")
 kongsemnenePirsPath = os.path.join("src", "res", "priser-Kongsemnene.txt")
 kongsemneneMedvirkendePath = os.path.join("src", "res", "medvirkende-Kongsemnene.txt")
-skuespillerPath = os.path.join("src", "res", "skuespillere.txt")
+skuespillerPath = os.path.join("src", "res", "roller-Kongsemnene.txt")
 
 def verifyKongsemnene(cursor):
     """Verify the database with teaterstykke Kongsemnene"""
