@@ -725,6 +725,30 @@ class Skuespiller():
                 actors.append(Skuespiller(row[0], row[1]))
             return actors
         return None
+    
+    @staticmethod
+    def get_actor_connections(cursor: sqlite3.Cursor, name: str):
+        query = """
+        SELECT * FROM Skuespiller WHERE id = (
+          SELECT (skuespiller) FROM SkuespillerRolleJunction WHERE rolle = (
+            SELECT () FROM RolleAkterJunction WHERE akt IN (
+              SELECT * FROM Akt WHERE id = (
+                SELECT (akt) FROM RolleAkterJunction WHERE rolle = (
+                  SELECT (rolle) FROM SkuespillerRolleJunction WHERE skuespiller = (
+                    SELECT (id) FROM Skuespiller WHERE navn = ?
+                  )
+                )
+              )
+            )
+          )
+        )
+        """
+        cursor.execute(query, (name,))
+        rows = cursor.fetchall()
+        actors = []
+        if rows:
+            for row in rows:
+                actors.append(Skuespiller(row[0], row[1]))
 
 
 
