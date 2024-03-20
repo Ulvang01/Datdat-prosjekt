@@ -46,7 +46,7 @@ class Område:
         self.navn = navn
         self.sal = sal
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return f"Område(id={self.id}, navn={self.navn}, sal={self.sal.navn})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
@@ -458,7 +458,7 @@ class BillettPris():
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return BillettPris(row[0], row[1], row[2], Teaterstykket.get_by_id(cursor, row[3]))
+            return BillettPris(row[0], row[3], row[1], Teaterstykket.get_by_id(cursor, row[2]))
         return None
     
     @staticmethod
@@ -482,21 +482,21 @@ class BillettPris():
         cursor.executemany(query, values)
 
 class KundeProfil():
-    def __init__(self, id: int, navn: str, email: str, telefon: str):
+    def __init__(self, id: int, navn: str, adresse: str, telefon: str):
         self.id = id
         self.navn = navn
-        self.email = email
+        self.adresse = adresse
         self.telefon = telefon
 
     def __str__(self):
-        return f"KundeProfil(id={self.id}, navn={self.navn}, email={self.email}, telefon={self.telefon})"
+        return f"KundeProfil(id={self.id}, navn={self.navn}, adresse={self.adresse}, telefon={self.telefon})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO KundeProfil (id, navn, email, telefon) VALUES (?, ?, ?, ?)
+        INSERT INTO KundeProfil (id, navn, adresse, telefon) VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        cursor.execute(query, (self.id, self.navn, self.email, self.telefon))
+        cursor.execute(query, (self.id, self.navn, self.adresse, self.telefon))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
@@ -508,8 +508,8 @@ class KundeProfil():
             return False
         
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE KundeProfil SET navn = ?, email = ?, telefon = ? WHERE id = ?"
-        cursor.execute(query, (self.navn, self.email, self.telefon, self.id))
+        query = "UPDATE KundeProfil SET navn = ?, adresse = ?, telefon = ? WHERE id = ?"
+        cursor.execute(query, (self.navn, self.adresse, self.telefon, self.id))
 
     @staticmethod
     def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['KundeProfil']:
@@ -533,11 +533,11 @@ class KundeProfil():
     @staticmethod
     def upsert_batch(cursor: sqlite3.Cursor, kundeprofil_list: List['KundeProfil']) -> None:
         query = """
-        INSERT INTO KundeProfil (navn, email, telefon) VALUES (?, ?, ?)
+        INSERT INTO KundeProfil (navn, adresse, telefon) VALUES (?, ?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(email) DO NOTHING
+        ON CONFLICT(adresse) DO NOTHING
         """
-        values = [(kundeprofil.navn, kundeprofil.email, kundeprofil.telefon) for kundeprofil in kundeprofil_list]
+        values = [(kundeprofil.navn, kundeprofil.adresse, kundeprofil.telefon) for kundeprofil in kundeprofil_list]
         cursor.executemany(query, values)
 
 class BillettKjøp():
@@ -550,8 +550,9 @@ class BillettKjøp():
     def __str__(self):
         return f"BillettKjøp(id={self.id}, time={self.time}, dato={self.dato}, kundeProfile={self.kundeProfile})"
     
-    def insert(self):
-        return f"INSERT INTO BillettKjøp (id, tid, dato, kunde) VALUES ({self.id}, {self.time}, {self.dato}, {self.kundeProfile})"
+    def insert(self, cursor: sqlite3.Cursor):
+        query = "INSERT INTO BillettKjøp (id, tid, dato, kunde) VALUES (?, ?, ?, ?)"
+        cursor.execute(query, (self.id, self.time, self.dato, self.kundeProfile.id))
     
     def update(self, cursor: sqlite3.Cursor) -> None:
         query = "UPDATE BillettKjøp SET tid = ?, dato = ?, kunde = ? WHERE id = ?"
@@ -648,9 +649,9 @@ class Billett():
     @staticmethod
     def upsert_batch(cursor: sqlite3.Cursor, billett_list: List['Billett']) -> None:
         query = """
-        INSERT INTO Billett (visning, stol, billettPris, billettKjøp) VALUES (?, ?, ?, ?)
+        INSERT INTO Billett (visning, stol, pris, kjøp) VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(visning, stol, billettPris, billettKjøp) DO NOTHING
+        ON CONFLICT(visning, stol, pris, kjøp) DO NOTHING
         """
         values = [(billett.visning.id, billett.stol.id, billett.billettPris.id, billett.billettKjøp.id) for billett in billett_list]
         cursor.executemany(query, values)    

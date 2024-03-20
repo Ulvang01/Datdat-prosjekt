@@ -44,7 +44,7 @@ def getChairList(cursor, content, rows, chairPerRow: bool):
                         charis.append(Stol(None, stol_count, Rad.get_by_område_and_radnr(cursor, rows[rad_count].område, rows[rad_count].radnr)))
                     stol_count += 1
                 rad_count += 1
-                if not chairPerRow:
+                if chairPerRow:
                     stol_count = 1
     Stol.upsert_batch(cursor, charis)
     return charis
@@ -91,8 +91,8 @@ def veifyScene(cursor, path, scene):
         content = content[::-1]
         område_list = processOmråde(content, scene, cursor)
         rows = getRows(cursor, content, område_list)
-
-        if scene == "Hovedscene":
+        
+        if scene.navn == "Hovedscene":
             stol_list = getChairList(cursor, content, rows, False)
         else:
             stol_list = getChairList(cursor, content, rows, True)
