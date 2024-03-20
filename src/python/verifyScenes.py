@@ -1,3 +1,4 @@
+import sqlite3
 from src.python.models import Sal, Område, Rad, Stol
 import re
 import os
@@ -61,7 +62,7 @@ def deleteUnverifiedRad(cursor, rows, scene):
     for db_rad in Rad.get_by_sal(cursor, scene):
         should_delete = True
         for txt_rad in rows:
-            if db_rad.radnr == txt_rad.radnr and db_rad.område == txt_rad.område:
+            if db_rad.radnr == txt_rad.radnr and db_rad.område.id == txt_rad.område.id:
                 should_delete = False
         if should_delete:
             db_rad.delete(cursor)
@@ -102,15 +103,18 @@ def veifyScene(cursor, path, scene):
 
         cursor.execute("COMMIT;")
         print(f"{scene} verified.")
+        return
     except Exception as e:
         print(f"Failed to verify {scene}.")
         print(e.with_traceback())
         cursor.execute("ROLLBACK;")
         return
 
+
 def verifyScenes(conn):
     '''Populate databasen with some data'''
     cursor = conn.cursor()
     veifyScene(cursor, hovedScenePath, "Hovedscene")
+    conn.commit()
     veifyScene(cursor, gamleScenePath, "Gamle-scene")
     conn.commit()
