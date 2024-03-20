@@ -5,7 +5,7 @@ from src.python.verifyTeaterstykker import verifyTeaterstykkene
 from src.python.verifyDB import verifyDB
 from src.python.verifyScenes import verifyScenes
 from src.python.verifyMedvirkende import verifyMedvirkendeAndStatus
-from src.python.models import Skuespiller, Teaterstykket
+from src.python.models import Skuespiller, Teaterstykket, Visning
 
 database = os.path.join("src", "sql", "database.db")
 
@@ -23,6 +23,7 @@ def main():
             print("\nThe following arguments are available:")
             print(" - verify  --> Verify the database and populate it with some data.")
             print(" - getActorsByPlay <name of play>  --> Get all actors in a given play.")
+            print(" - getBestsellingScreening  --> Get the best selling screening.")
         if inp == 'verify':
             verifyDB(conn)
             verifyScenes(conn)
@@ -37,7 +38,11 @@ def main():
             actors = Skuespiller.get_all_by_play(cursor, play.id)
             for actor in actors: 
                 print(actor.__str__())
-    
+        if inp.split(' ')[0] == 'getBestsellingScreening':
+            best_play = Visning.get_bestselling(cursor)
+            print("Best selling screening is: ", best_play[0].teaterstykket.navn, " at ", best_play[0].dato, ".")
+            print("And it has sold: ", best_play[1], " tickets.")
+
     conn.close()
 if __name__ == "__main__":
     main()
