@@ -3,7 +3,7 @@ import os
 import sqlite3
 import datetime
 
-from models import * # TODO: only the models I need
+from src.python.models import BillettPris, Teaterstykket, Visning, Sal, Rad, Stol, BillettKjøp, KundeProfil, Område, Billett
 
 avspillingPath = os.path.join("src", "res", "avspillingsdager.txt")
 kongsemnenePirsPath = os.path.join("src", "res", "priser-Kongsemnene.txt")

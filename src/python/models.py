@@ -1,6 +1,6 @@
 import datetime
 import sqlite3
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 class Sal:
     def __init__(self, navn: str):
@@ -398,7 +398,7 @@ class Visning():
         return visninger
     
     @staticmethod
-    def get_bestselling(cursor: sqlite3.Cursor) -> Optional[List['Visning', int]]:
+    def get_bestselling(cursor: sqlite3.Cursor) -> Optional[Tuple['Visning', int]]:
         query = """
         SELECT vising, COUNT(*) AS visingCount
         FROM Billett
