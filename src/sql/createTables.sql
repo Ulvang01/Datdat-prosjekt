@@ -119,25 +119,19 @@ CREATE TABLE RolleAkterJunction (
 CREATE TABLE Medvirkende (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     navn VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL,
     ansatt_status VARCHAR(255) NOT NULL,
-    stillings_tittel VARCHAR(255) NOT NULL,
-    FOREIGN KEY (ansatt_status) REFERENCES AnsattStatus(ansatt_status),
-    FOREIGN KEY (stillings_tittel) REFERENCES StillingsTittel(stillings_tittel)
+    FOREIGN KEY (ansatt_status) REFERENCES AnsattStatus(ansatt_status)
 );
 
 CREATE TABLE AnsattStatus (
     ansatt_status VARCHAR(255) PRIMARY KEY
 );
 
-CREATE TABLE StillingsTittel (
-    stillings_tittel VARCHAR(255) PRIMARY KEY
-);
 
 CREATE TABLE Oppgave (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     navn VARCHAR(255) NOT NULL,
-    beskrivelse VARCHAR(255) NOT NULL,
     teaterstykket INTEGER NOT NULL,
     FOREIGN KEY (teaterstykket) REFERENCES Teaterstykket(id)
 );

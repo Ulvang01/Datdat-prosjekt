@@ -4,6 +4,7 @@ import os
 from src.python.verifyTeaterstykker import verifyTeaterstykkene
 from src.python.verifyDB import verifyDB
 from src.python.verifyScenes import verifyScenes
+from src.python.verifyMedvirkende import verifyMedvirkendeAndStatus
 from src.python.models import Skuespiller, Teaterstykket
 
 database = os.path.join("src", "sql", "database.db")
@@ -26,6 +27,7 @@ def main():
             verifyDB(conn)
             verifyScenes(conn)
             verifyTeaterstykkene(conn)
+            verifyMedvirkendeAndStatus(conn)
             conn.commit()
         if inp.split(' ')[0] == 'getActorsByPlay': 
             play = Teaterstykket.get_by_name(cursor, inp.split(' ')[1])
