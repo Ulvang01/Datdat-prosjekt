@@ -295,6 +295,7 @@ class Teaterstykket():
             return Teaterstykket(id, row[1], row[2], row[4], row[3])
         return None
     
+    @staticmethod
     def get_by_name(cursor: sqlite3.Cursor, navn: str) -> Optional['Teaterstykket']:
         query = "SELECT * FROM Teaterstykket WHERE navn = ?"
         cursor.execute(query, (navn,))
@@ -302,7 +303,7 @@ class Teaterstykket():
         if row:
             return Teaterstykket(int(row[0]), row[1], row[2], row[4], row[3])
         return None
-    
+
     @staticmethod
     def get_all(cursor: sqlite3.Cursor) -> List['Teaterstykket']:
         query = "SELECT * FROM Teaterstykket"
@@ -396,6 +397,21 @@ class Visning():
             visninger.append(Visning(row[0], row[1], Teaterstykket.get_by_id(cursor, row[2])))
         return visninger
     
+    @staticmethod
+    def get_bestselling(cursor: sqlite3.Cursor) -> Optional[List['Visning', int]]:
+        query = """
+        SELECT vising, COUNT(*) AS visingCount
+        FROM Billett
+        GROUP BY vising
+        ORDER BY visingCount DESC
+        LIMIT 1;
+        """
+        cursor.execute(query)
+        row = cursor.fetchone()
+        if row:
+            return [Visning.get_by_id(cursor, row[0]), row[1]]
+        return None
+
     @staticmethod
     def upsert_batch(cursor: sqlite3.Cursor, visning_list: List['Visning']) -> None:
         query = """
