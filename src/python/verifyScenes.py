@@ -29,8 +29,8 @@ def verifyHovedscene(cursor):
             print("Reading hovedscene...")
             content = file.readlines()[1:]
 
-        område_list = processOmråde(content, hovedScene, cursor)
         content = content[::-1]
+        område_list = processOmråde(content, hovedScene, cursor)
 
         område_count = 0
         rad_list = []

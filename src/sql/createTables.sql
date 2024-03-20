@@ -51,7 +51,7 @@ CREATE TABLE Kundeprofil (
     adresse VARCHAR(255) NOT NULL UNIQUE
 );
 
-CREATE TABLE BilletKjøp (
+CREATE TABLE BillettKjøp (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     kunde INTEGER NOT NULL,
     dato DATE NOT NULL,
