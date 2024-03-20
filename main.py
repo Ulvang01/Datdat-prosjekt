@@ -23,6 +23,7 @@ def main():
             print("\nThe following arguments are available:")
             print(" - verify  --> Verify the database and populate it with some data.")
             print(" - getActorsByPlay <name of play>  --> Get all actors in a given play.")
+            print(" - getBestsellingScreening  --> Get the best selling screening.")
         if inp == 'verify':
             verifyDB(conn)
             verifyScenes(conn)
