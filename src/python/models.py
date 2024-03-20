@@ -534,14 +534,9 @@ class BillettKjøp():
     def __str__(self):
         return f"BillettKjøp(id={self.id}, time={self.time}, dato={self.dato}, kundeProfile={self.kundeProfile})"
     
-<<<<<<< HEAD
     def insert(self, cursor: sqlite3.Cursor):
         query = "INSERT INTO BillettKjøp (id, tid, dato, kunde) VALUES (?, ?, ?, ?)"
         cursor.execute(query, (self.id, self.time, self.dato, self.kundeProfile.id))
-=======
-    def insert(self):
-        return f"INSERT INTO BillettKjøp (id, tid, dato, kunde) VALUES ({self.id}, {self.time}, {self.dato}, {self.kundeProfile})"
->>>>>>> 22306e8ffba72d9e2f5b16aca8fd994c4527bb0e
     
     def update(self, cursor: sqlite3.Cursor) -> None:
         query = "UPDATE BillettKjøp SET tid = ?, dato = ?, kunde = ? WHERE id = ?"
