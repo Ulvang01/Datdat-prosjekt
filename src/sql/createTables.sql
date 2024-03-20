@@ -70,15 +70,15 @@ CREATE TABLE BillettPris (
 
 CREATE TABLE Billett (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    vising INTEGER NOT NULL,
+    visning INTEGER NOT NULL,
     stol INTEGER NOT NULL,
     kjøp INTEGER NOT NULL,
     pris INTEGER NOT NULL,
-    FOREIGN KEY (vising) REFERENCES Visning(id),
+    FOREIGN KEY (visning) REFERENCES Visning(id),
     FOREIGN KEY (stol) REFERENCES Stol(id),
     FOREIGN KEY (kjøp) REFERENCES BilletKjøp(id),
     FOREIGN KEY (pris) REFERENCES BillettPris(id),
-    UNIQUE (vising, stol, kjøp, pris)
+    UNIQUE (visning, stol, kjøp, pris)
 );
 
 CREATE TABLE Skuespiller (

@@ -56,7 +56,7 @@ def verifyMedvirkende(cursor):
         print("Done verifying medvirkende...")
     except Exception as e:
         print("Error verifying medvirkende...")
-        print(e.with_traceback())
+        print(e.with_traceback(e.__traceback__))
         cursor.execute("ROLLBACK;")
         return
 

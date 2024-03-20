@@ -442,7 +442,7 @@ class BillettPris():
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return BillettPris(row[0], row[1], row[2], Teaterstykket.get_by_id(cursor, row[3]))
+            return BillettPris(row[0], row[3], row[1], Teaterstykket.get_by_id(cursor, row[2]))
         return None
     
     @staticmethod
@@ -633,9 +633,9 @@ class Billett():
     @staticmethod
     def upsert_batch(cursor: sqlite3.Cursor, billett_list: List['Billett']) -> None:
         query = """
-        INSERT INTO Billett (visning, stol, billettPris, billettKjøp) VALUES (?, ?, ?, ?)
+        INSERT INTO Billett (visning, stol, pris, kjøp) VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(visning, stol, billettPris, billettKjøp) DO NOTHING
+        ON CONFLICT(visning, stol, pris, kjøp) DO NOTHING
         """
         values = [(billett.visning.id, billett.stol.id, billett.billettPris.id, billett.billettKjøp.id) for billett in billett_list]
         cursor.executemany(query, values)    
