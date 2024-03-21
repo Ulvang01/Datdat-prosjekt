@@ -215,9 +215,9 @@ class Chair:
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            row = Row.get_by_id(cursor, row[2]) 
+            chair_row = Row.get_by_id(cursor, row[2]) 
             if row:
-                return Chair(row[0], row[1], row)
+                return Chair(row[0], row[1], chair_row)
         return None
     
     @staticmethod
