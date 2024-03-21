@@ -332,6 +332,21 @@ class Teaterstykket():
         if teaterstykket:
             return Teaterstykket(teaterstykket[0], teaterstykket[1], teaterstykket[2], teaterstykket[3], teaterstykket[4])
         return None
+    
+    @staticmethod
+    def get_by_act_ids(cursor: sqlite3.Cursor, actIds: List['int']):
+        query = """
+        SELECT * FROM Teaterstykket WHERE id = (
+          SELECT (teaterstykket) FROM Akt WHERE id = ?
+        )
+        """
+        values = [(id) for id in actIds]
+        cursor.executemany(query, values)
+        rows = cursor.fetchall()
+        plays = []
+        if rows:
+            for row in rows:
+                plays.append(Teaterstykket(row[0], row[1], row[2], row[3], row[4]))
 
 
 class Visning():
@@ -642,7 +657,26 @@ class Akt():
         """
         values = [(akt.nummer, akt.navn, akt.teaterstykket.id) for akt in akt_list]
         cursor.executemany(query, values)
-        
+    
+    @staticmethod
+    def get_acts_by_actor(cursor: sqlite3.Cursor, name: str):
+        query = """
+        SELECT * FROM Akt WHERE id = (
+          SELECT (akt) FROM RolleAkterJunction WHERE rolle = (
+            SELECT (rolle) FROM SkuespillerRolleJunction WHERE skuespiller = (
+              SELECT (id) FROM Skuespiller WHERE navn = ?
+            )
+          )
+        )
+        """
+        cursor.execute(query, (name,))
+        rows = cursor.fetchall()
+        acts = []
+        if rows:
+            for row in rows:
+                acts.append(Akt(row[0], row[1], row[3], row[2]))
+            return acts
+        return None
 
 class Skuespiller():
     id: int
@@ -733,31 +767,15 @@ class Skuespiller():
         return None
     
     @staticmethod
-    def get_actor_connections(cursor: sqlite3.Cursor, name: str):
-        query = """
-        SELECT * FROM Skuespiller WHERE id = (
-          SELECT (skuespiller) FROM SkuespillerRolleJunction WHERE rolle = (
-            SELECT () FROM RolleAkterJunction WHERE akt IN (
-              SELECT * FROM Akt WHERE id = (
-                SELECT (akt) FROM RolleAkterJunction WHERE rolle = (
-                  SELECT (rolle) FROM SkuespillerRolleJunction WHERE skuespiller = (
-                    SELECT (id) FROM Skuespiller WHERE navn = ?
-                  )
-                )
-              )
-            )
-          )
-        )
-        """
-        cursor.execute(query, (name,))
+    def get_actors_by_acts(cursor: sqlite3.Cursor, actId: int):
+        cursor.execute(query, (actId,))
         rows = cursor.fetchall()
         actors = []
         if rows:
             for row in rows:
                 actors.append(Skuespiller(row[0], row[1]))
-
-
-
+            return actors
+        return None
     
 class Roller():
     id: int

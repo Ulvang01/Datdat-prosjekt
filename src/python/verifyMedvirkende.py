@@ -37,8 +37,8 @@ def verifyMedvirkende(cursor):
         
         content = [x.split(":") for x in content]
         
+        print("Verifying medvirkende...")
         for i in range(len(content)):
-            print("Verifying medvirkende...")
             medvirkende = Medvirkende(None, content[i][0].strip(), "null", AnsattStatus.get_by_status(cursor, "ansatt"))
             medvirkende.insert(cursor)
             medvirkende = Medvirkende.get_by_name(cursor, medvirkende.navn)
