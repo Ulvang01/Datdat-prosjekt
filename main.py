@@ -42,7 +42,10 @@ def main():
             conn.commit()
 
         elif inp.split(' ')[0] == 'getActorsByPlay': 
-            play = Play.get_by_name(cursor, inp.split(' ')[1])
+            if len(inp.split(' ')) < 2:
+                print('Invalid amount of arguments')
+                continue
+            play = Play.get_by_name(cursor, inp[inp.find(' ')+1:])
             if not play:
                 print('Play does not exist.')
                 continue
