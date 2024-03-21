@@ -46,7 +46,8 @@ def main():
                 for actor in connection:
                     if inp.split(' ', 1)[1] in actor:
                         None
-                    else: print(f'Skuespiller_1={inp.split(' ', 1)[1]} ' + actor)
+                    else: 
+                        print(f'Skuespiller_1={inp.split(" ", 1)[1]} {actor}')
 
         elif inp.split(' ')[0] == 'getPlaysOnDate':
             plays = Play.get_plays_on_date(cursor, inp.split(' ')[1])
