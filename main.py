@@ -61,7 +61,9 @@ def main():
             ORDER BY
                 a.name, r.name;
             """
-            result = cursor.execute(query, (inp.split(' ')[1],)).fetchall()
+            parts = inp.split(maxsplit=1)
+            command_removed = parts[1] if len(parts) > 1 else ''
+            result = cursor.execute(query, (command_removed,)).fetchall()
             if not result:
                 print('No actors found for given play.')
                 continue
