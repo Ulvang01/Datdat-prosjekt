@@ -44,10 +44,12 @@ def main():
         if inp.split(' ')[0] == 'getActorConnections':
             acts = Akt.get_acts_by_actor(cursor, inp.split(' ', 1)[1])
             for act in acts:
-                print(act)
-            # actor_conn = Skuespiller.get_actor_connections(cursor, inp.split(' ', 1)[1])
-            # for actor in actor_conn:
-            #     print(actor.__str__())
+                connection = Skuespiller.get_actors_by_act(cursor, act.id)
+                for actor in connection:
+                    if inp.split(' ', 1)[1] in actor:
+                        None
+                    else: print(f'Skuespiller_1={inp.split(' ', 1)[1]} ' + actor)
+
         elif inp.split(' ')[0] == 'getPlaysOnDate':
             plays = Teaterstykket.get_plays_on_date(cursor, inp.split(' ')[1])
             if not plays:

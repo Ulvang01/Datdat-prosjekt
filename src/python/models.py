@@ -860,13 +860,25 @@ class Skuespiller():
         return None
     
     @staticmethod
-    def get_actors_by_acts(cursor: sqlite3.Cursor, actId: int):
+    def get_actors_by_act(cursor: sqlite3.Cursor, actId: int):
+        query = """
+        SELECT Skuespiller.navn, Teaterstykket.navn FROM Skuespiller 
+        LEFT OUTER JOIN SkuespillerRolleJunction 
+          ON Skuespiller.id = SkuespillerRolleJunction.skuespiller
+        LEFT OUTER JOIN RolleAkterJunction
+          ON SkuespillerRolleJunction.rolle = RolleAkterJunction.rolle
+        LEFT OUTER JOIN Akt
+          ON RolleAkterJunction.akt = Akt.id
+        LEFT OUTER JOIN Teaterstykket
+          ON Akt.teaterstykket = Teaterstykket.id
+        WHERE RolleAkterJunction.akt = ?
+        """
         cursor.execute(query, (actId,))
         rows = cursor.fetchall()
         actors = []
         if rows:
             for row in rows:
-                actors.append(Skuespiller(row[0], row[1]))
+                actors.append((f'Skuespiller={row[0]} Teaterstykket={row[1]}'))
             return actors
         return None
     
