@@ -61,13 +61,13 @@ def main():
                         print(f'Skuespiller_1={inp.split(" ", 1)[1]} {actor}')
 
         elif inp.split(' ')[0] == 'getPlaysByDate':
-            plays = Teaterstykket.get_plays_on_date(cursor, inp.split(' ')[1])
+            plays = Play.get_plays_on_date(cursor, inp.split(' ')[1])
             if not plays:
                 print('No plays on given date. Date format should be yyyy-mm-dd.')
                 continue
             for play in plays:
-                count = Billett.get_amount_by_play_and_date(cursor, play.id, inp.split(' ')[1])
-                print(f'Dato: {inp.split(' ')[1]}, {play.navn}, Solgte billetter={count[0]}')
+                count = Ticket.get_amount_by_play_and_date(cursor, play.id, inp.split(' ')[1])
+                print(f'Dato: {inp.split(" ")[1]}, {play.navn}, Solgte billetter={count[0]}')
         elif inp.split(' ')[0] == 'getBestsellingScreening':
             best_play = Screening.get_bestselling(cursor)
             print("Best selling screening is: ", best_play[0].play.name, " at ", best_play[0].date, ".")
