@@ -6,7 +6,7 @@ from src.python.verifyDB import verifyDB
 from src.python.verifyScenes import verifyScenes
 from src.python.verifyMedvirkende import verifyMedvirkendeAndStatus
 from src.python.verifyTickets import verifyTickets
-from src.python.models import Skuespiller, Teaterstykket, Visning
+from src.python.models import Skuespiller, Teaterstykket, Visning, Billett
 
 database = os.path.join("src", "sql", "database.db")
 
@@ -25,14 +25,15 @@ def main():
             print(" - verify  --> Verify the database and populate it with some data.")
             print(" - getActorsByPlay <name of play>  --> Get all actors in a given play.")
             print(" - getBestsellingScreening  --> Get the best selling screening.")
-        if inp == 'verify':
+            print(" - getPlaysByDate <yyyy-mm-dd>  --> Get all plays on a given date.")
+        elif inp == 'verify':
             verifyDB(conn)
             verifyScenes(conn)
             verifyTeaterstykkene(conn)
             verifyMedvirkendeAndStatus(conn)
             verifyTickets(conn)
             conn.commit()
-        if inp.split(' ')[0] == 'getActorsByPlay': 
+        elif inp.split(' ')[0] == 'getActorsByPlay': 
             play = Teaterstykket.get_by_name(cursor, inp.split(' ')[1])
             if not play:
                 print('Play does not exist.')
@@ -40,6 +41,14 @@ def main():
             actors = Skuespiller.get_all_by_play(cursor, play.id)
             for actor in actors: 
                 print(actor.__str__())
+        elif inp.split(' ')[0] == 'getPlaysOnDate':
+            plays = Teaterstykket.get_plays_on_date(cursor, inp.split(' ')[1])
+            if not plays:
+                print('No plays on given date. Date format should be yyyy-mm-dd.')
+                continue
+            for play in plays:
+                count = Billett.get_amount_by_play_and_date(cursor, play.id, inp.split(' ')[1])
+                print(play, f'(Solgte_billetter={count})')
         if inp.split(' ')[0] == 'getBestsellingScreening':
             best_play = Visning.get_bestselling(cursor)
             print("Best selling screening is: ", best_play[0].teaterstykket.navn, " at ", best_play[0].dato, ".")
