@@ -3,7 +3,7 @@ from typing import List
 import datetime
 import sqlite3
 import re
-from src.python.models import KundeProfil, BillettKjøp, Billett, Visning, Stol, BillettPris
+from src.python.models import CustomerProfile, TicketPurchase, Ticket, Screening, Chair, TicketPrice, Play
 
 
 def isValidDate(date: str) -> bool:
@@ -13,13 +13,13 @@ def isValidDate(date: str) -> bool:
     return True
 
 def isValidPlay(cursor: sqlite3.Cursor, play: str) -> bool:
-    if len(cursor.execute("SELECT * FROM Teaterstykket WHERE navn = ?", (play,)).fetchall()) == 0:
+    if len(Play.get_by_name(play)).fetchall() == 0:
         print("No play of that name")
         return False
     return True
 
 def isPlayOnDate(cursor: sqlite3.Cursor, date: datetime.date, play: str) -> bool:
-    if len(cursor.execute('''SELECT * FROM Visning WHERE dato = ? AND teaterstykket = (
+    if len(cursor.execute('''SELECT * FROM Screening WHERE dato = ? AND teaterstykket = (
                                     SELECT id FROM Teaterstykket WHERE navn = ?
                                 )''', (date, play)).fetchall()) == 0:
         print("No screenings of that play on that day")
@@ -62,8 +62,8 @@ def isValidCustomer(cursor: sqlite3.Cursor, customer: str) -> bool:
 
 def isValidTicketType(cursor: sqlite3.Cursor, ticketType: str, play: str):
     validTicketTypes = cursor.execute('''
-                                        SELECT BillettPris.billett_type FROM BillettPris
-                                            JOIN Teaterstykket ON BillettPris.teaterstykket = Teaterstykket.id
+                                        SELECT TicketPrice.billett_type FROM TicketPrice
+                                            JOIN Teaterstykket ON TicketPrice.teaterstykket = Teaterstykket.id
                                             WHERE Teaterstykket.navn = ? 
                                       ''', (play,)).fetchall()
     validTicketTypes = [element[0] for element in validTicketTypes]
@@ -84,19 +84,19 @@ def getFreeSeats(cursor: sqlite3.Cursor, nameOfPlay: str, date: str, shouldPrint
         return
     
     query = '''
-    SELECT Rad.id, COUNT(Stol.id) FROM Stol JOIN Billett ON Stol.id = Billett.stol 
-        RIGHT OUTER JOIN Rad ON Stol.rad = Rad.id
-            JOIN Visning ON Billett.visning = Visning.id 
-                JOIN Teaterstykket ON Visning.teaterstykket = Teaterstykket.id
-                    WHERE Visning.dato = ? AND Teaterstykket.navn = ?
+    SELECT Rad.id, COUNT(Chair.id) FROM Chair JOIN Ticket ON Chair.id = Ticket.stol 
+        RIGHT OUTER JOIN Rad ON Chair.rad = Rad.id
+            JOIN Screening ON Ticket.visning = Screening.id 
+                JOIN Teaterstykket ON Screening.teaterstykket = Teaterstykket.id
+                    WHERE Screening.dato = ? AND Teaterstykket.navn = ?
         GROUP BY Rad.id
     '''
     tickets = cursor.execute(query, (date, nameOfPlay)).fetchall()
     
     
     query = '''
-    SELECT Rad.id, Rad.radnr, Område.navn, COUNT(Stol.id) FROM Rad JOIN Område ON Rad.område = Område.id
-        JOIN Stol ON Stol.rad = Rad.id
+    SELECT Rad.id, Rad.radnr, Område.navn, COUNT(Chair.id) FROM Rad JOIN Område ON Rad.område = Område.id
+        JOIN Chair ON Chair.rad = Rad.id
             WHERE Område.sal IN (SELECT Teaterstykket.sal FROM Teaterstykket
                 WHERE Teaterstykket.navn = ?)
         GROUP BY Rad.id
@@ -165,34 +165,34 @@ def purchaseTickets(cursor: sqlite3.Cursor, play: str, date: str, row: str, area
     
     time = cursor.execute("SELECT Teaterstykket.tid FROM Teaterstykket WHERE navn = ?", (play,)).fetchone()[0]
     customerProfile = cursor.execute("SELECT id FROM Kundeprofil WHERE navn = ?", (customer,)).fetchone()[0]
-    customerProfile = KundeProfil.get_by_id(cursor, customerProfile)
+    customerProfile = CustomerProfile.get_by_id(cursor, customerProfile)
     
-    purchase = BillettKjøp(None, time, date, customerProfile)
+    purchase = TicketPurchase(None, time, date, customerProfile)
     purchase.insert(cursor)
     
     purchaseid = cursor.execute('''
-                                SELECT id FROM BillettKjøp 
+                                SELECT id FROM TicketPurchase 
                                     WHERE kunde = ? 
                                         AND dato = ?
                                         AND tid = ?
                                 ''', (customerProfile.id, date, time)).fetchone()[0]
     
     screeningid = cursor.execute('''
-                                    SELECT Visning.id FROM Visning JOIN Teaterstykket ON Visning.teaterstykket = Teaterstykket.id
-                                        WHERE Visning.dato = ? AND Teaterstykket.navn = ?
+                                    SELECT Screening.id FROM Screening JOIN Teaterstykket ON Screening.teaterstykket = Teaterstykket.id
+                                        WHERE Screening.dato = ? AND Teaterstykket.navn = ?
                                 ''', (date, play)).fetchone()[0]
     
     priceid = cursor.execute('''
-                                SELECT BillettPris.id FROM BillettPris
-                                    JOIN Teaterstykket ON BillettPris.teaterstykket = Teaterstykket.id
-                                    WHERE BillettPris.billett_type = ? AND Teaterstykket.navn = ?
+                                SELECT TicketPrice.id FROM TicketPrice
+                                    JOIN Teaterstykket ON TicketPrice.teaterstykket = Teaterstykket.id
+                                    WHERE TicketPrice.billett_type = ? AND Teaterstykket.navn = ?
                              ''', (ticketType, play)).fetchone()[0]
     
     
     
     seatsOnRow = cursor.execute('''
-                                SELECT Stol.id FROM Stol 
-                                    JOIN Rad ON Stol.rad = Rad.id
+                                SELECT Chair.id FROM Chair 
+                                    JOIN Rad ON Chair.rad = Rad.id
                                     JOIN Område ON Rad.område = Område.id
                                     JOIN Sal ON Område.sal = Sal.navn
                                     JOIN Teaterstykket ON Teaterstykket.sal = Sal.navn
@@ -200,18 +200,18 @@ def purchaseTickets(cursor: sqlite3.Cursor, play: str, date: str, row: str, area
                                         AND Område.navn = ? 
                                         AND Teaterstykket.navn = ?
                                 EXCEPT
-                                SELECT Stol.id FROM Stol 
-                                    JOIN Billett ON Stol.id = Billett.Stol
+                                SELECT Chair.id FROM Chair 
+                                    JOIN Ticket ON Chair.id = Ticket.Chair
                                 ''', (row, area, play)).fetchall()
     
-    screening = Visning.get_by_id(cursor, screeningid)
-    price = BillettPris.get_by_id(cursor, priceid)
-    purchase = BillettKjøp.get_by_id(cursor, purchaseid)
+    screening = Screening.get_by_id(cursor, screeningid)
+    price = TicketPrice.get_by_id(cursor, priceid)
+    purchase = TicketPurchase.get_by_id(cursor, purchaseid)
     
     tickets = []
     for i in range(amount):
-        tickets.append(Billett(None, screening, Stol.get_by_id(cursor, seatsOnRow[i][0]), price, purchase))
-    Billett.upsert_batch(cursor, tickets)
+        tickets.append(Ticket(None, screening, Chair.get_by_id(cursor, seatsOnRow[i][0]), price, purchase))
+    Ticket.upsert_batch(cursor, tickets)
     
     priceForOne = price.pris
     print(f"Price: {len(tickets)*priceForOne}")
@@ -220,7 +220,7 @@ def makeCustomerProfile(cursor: sqlite3.Cursor, name: str, phoneNr: str, address
     if not re.fullmatch("[0-9]+", phoneNr):
         print("Invalid phone number, phone number must be a number")
         return
-    customer = KundeProfil(None, name, address, phoneNr)
+    customer = CustomerProfile(None, name, address, phoneNr)
     try:
         customer.insert(cursor)
     except sqlite3.IntegrityError:
