@@ -51,7 +51,7 @@ CREATE TABLE Kundeprofil (
     adresse VARCHAR(255) NOT NULL UNIQUE
 );
 
-CREATE TABLE BilletKjøp (
+CREATE TABLE BillettKjøp (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     kunde INTEGER NOT NULL,
     dato DATE NOT NULL,
@@ -70,15 +70,15 @@ CREATE TABLE BillettPris (
 
 CREATE TABLE Billett (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    vising INTEGER NOT NULL,
-    sete INTEGER NOT NULL,
+    visning INTEGER NOT NULL,
+    stol INTEGER NOT NULL,
     kjøp INTEGER NOT NULL,
     pris INTEGER NOT NULL,
-    FOREIGN KEY (vising) REFERENCES Visning(id),
-    FOREIGN KEY (sete) REFERENCES Stol(id),
+    FOREIGN KEY (visning) REFERENCES Visning(id),
+    FOREIGN KEY (stol) REFERENCES Stol(id),
     FOREIGN KEY (kjøp) REFERENCES BilletKjøp(id),
     FOREIGN KEY (pris) REFERENCES BillettPris(id),
-    UNIQUE (vising, sete, kjøp, pris)
+    UNIQUE (visning, stol, kjøp, pris)
 );
 
 CREATE TABLE Skuespiller (
@@ -119,25 +119,19 @@ CREATE TABLE RolleAkterJunction (
 CREATE TABLE Medvirkende (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     navn VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL,
     ansatt_status VARCHAR(255) NOT NULL,
-    stillings_tittel VARCHAR(255) NOT NULL,
-    FOREIGN KEY (ansatt_status) REFERENCES AnsattStatus(ansatt_status),
-    FOREIGN KEY (stillings_tittel) REFERENCES StillingsTittel(stillings_tittel)
+    FOREIGN KEY (ansatt_status) REFERENCES AnsattStatus(ansatt_status)
 );
 
 CREATE TABLE AnsattStatus (
     ansatt_status VARCHAR(255) PRIMARY KEY
 );
 
-CREATE TABLE StillingsTittel (
-    stillings_tittel VARCHAR(255) PRIMARY KEY
-);
 
 CREATE TABLE Oppgave (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     navn VARCHAR(255) NOT NULL,
-    beskrivelse VARCHAR(255) NOT NULL,
     teaterstykket INTEGER NOT NULL,
     FOREIGN KEY (teaterstykket) REFERENCES Teaterstykket(id)
 );
