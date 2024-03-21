@@ -673,17 +673,14 @@ class Billett():
         cursor.executemany(query, values)  
 
     @staticmethod
-    def get_amount_by_play(cursor: sqlite3.Cursor, id: int):
+    def get_amount_by_play_and_date(cursor: sqlite3.Cursor, id: int, date: str):
         query = """
-        SELECT COUNT(*) FROM Billett WHERE visning = (
-          SELECT (id) FROM Visning WHERE teaterstykket = (
-            SELECT (id) FROM Teaterstykket WHERE id = ?
-          )
-        )
+        SELECT COUNT(*) FROM Billett 
+        JOIN Visning ON Billett.visning = Visning.id 
+        WHERE Visning.teaterstykket = ? AND Visning.dato = ?
         """  
-        cursor.execute(query, (id,))
+        cursor.execute(query, (id, date,))
         count = cursor.fetchone()
-        print(count)
         return count if count else None
 
 class Akt():

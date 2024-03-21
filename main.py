@@ -47,7 +47,7 @@ def main():
                 print('No plays on given date. Date format should be yyyy-mm-dd.')
                 continue
             for play in plays:
-                count = Billett.get_amount_by_play(cursor, play.id)
+                count = Billett.get_amount_by_play_and_date(cursor, play.id, inp.split(' ')[1])
                 print(play, f'(Solgte_billetter={count})')
         if inp.split(' ')[0] == 'getBestsellingScreening':
             best_play = Visning.get_bestselling(cursor)
