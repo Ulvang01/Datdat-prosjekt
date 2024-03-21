@@ -334,6 +334,22 @@ class Play():
         if play:
             return Play(play[0], play[1], play[2], play[3], play[4])
         return None
+    
+    @staticmethod
+    def get_plays_on_date(cursor: sqlite3.Cursor, date: str):
+        query = """
+        SELECT * FROM Play WHERE id = (
+          SELECT (play) from Screening WHERE date = ?
+        )
+        """
+        cursor.execute(query, (date,))
+        rows = cursor.fetchall()
+        plays = []
+        if rows:
+            for row in rows:
+                plays.append(Play(row[0], row[1], row[2], row[3], row[4]))
+            return plays
+        return None
 
 
 class Screening():
@@ -656,6 +672,17 @@ class Ticket():
         values = [(ticket.screening.id, ticket.chair.id, ticket.ticketpirce.id, ticket.ticketPurchase.id) for ticket in purchase_list]
         cursor.executemany(query, values)    
 
+    @staticmethod
+    def get_amount_by_play_and_date(cursor: sqlite3.Cursor, id: int, date: str):
+        query = """
+        SELECT COUNT(*) FROM Ticket 
+        JOIN Screening ON Ticket.screening = Screening.id 
+        WHERE Screening.play = ? AND Screening.date = ?
+        """  
+        cursor.execute(query, (id, date,))
+        count = cursor.fetchone()
+        return count if count else None
+
 class Act():
     def __init__(self, id: int, number: int, play: Play, name: str = None):
         self.id = id
@@ -709,21 +736,40 @@ class Act():
         query = "SELECT * FROM Act"
         cursor.execute(query)
         rows = cursor.fetchall()
-        aktene = []
+        acts = []
         for row in rows:
-            aktene.append(Act(row[0], row[1], row[2], Play.get_by_id(cursor, row[3])))
-        return aktene
+            acts.append(Act(row[0], row[1], row[2], Play.get_by_id(cursor, row[3])))
+        return acts
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, akt_list: List['Act']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, act_list: List['Act']) -> None:
         query = """
         INSERT INTO Act (number, name, play) VALUES (?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         ON CONFLICT(number, play) DO NOTHING
         """
-        values = [(act.number, act.name, act.play.id) for act in akt_list]
+        values = [(act.number, act.name, act.play.id) for act in act_list]
         cursor.executemany(query, values)
-        
+    
+    @staticmethod
+    def get_acts_by_actor(cursor: sqlite3.Cursor, name: str):
+        query = """
+        SELECT * FROM Act WHERE id = (
+          SELECT (act) FROM RoleActJunction WHERE role = (
+            SELECT (role) FROM ActorRoleJunction WHERE actor = (
+              SELECT (id) FROM Actor WHERE name = ?
+            )
+          )
+        )
+        """
+        cursor.execute(query, (name,))
+        rows = cursor.fetchall()
+        acts = []
+        if rows:
+            for row in rows:
+                acts.append(Act(row[0], row[1], row[3], row[2]))
+            return acts
+        return None
 
 class Actor():
     def __init__(self, id: int, name: str):
@@ -809,9 +855,29 @@ class Actor():
                 actors.append(Actor(row[0], row[1]))
             return actors
         return None
-
-
-
+    
+    @staticmethod
+    def get_actors_by_act(cursor: sqlite3.Cursor, actId: int):
+        query = """
+        SELECT Actor.name, Play.name FROM Actor 
+        LEFT OUTER JOIN ActorRoleJunction 
+          ON Actor.id = ActorRoleJunction.actor
+        LEFT OUTER JOIN RoleActJunction
+          ON ActorRoleJunction.role = RoleActJunction.role
+        LEFT OUTER JOIN Act
+          ON RoleActJunction.act = Act.id
+        LEFT OUTER JOIN Play
+          ON Act.play = Play.id
+        WHERE RoleActJunction.act = ?
+        """
+        cursor.execute(query, (actId,))
+        rows = cursor.fetchall()
+        actors = []
+        if rows:
+            for row in rows:
+                actors.append((f'Actor={row[0]} Play={row[1]}'))
+            return actors
+        return None
     
 class Role():
     def __init__(self, id: int, name: str):
