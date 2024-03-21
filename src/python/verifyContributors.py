@@ -43,7 +43,6 @@ def verifyContributors(cursor):
             contributors.insert(cursor)
             contributors = Contributor.get_by_name(cursor, contributors.name)
             tasks = content[i][1].split("/")
-            print("here")
             for t in tasks:
                 print(content[i][2].strip())
                 task = Task.get_by_name_and_play(cursor, t.strip(), Play.get_by_name(cursor, content[i][2].strip()))

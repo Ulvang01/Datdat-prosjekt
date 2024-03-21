@@ -58,7 +58,7 @@ def main():
                     if inp.split(' ', 1)[1] in actor:
                         None
                     else: 
-                        print(f'Skuespiller_1={inp.split(" ", 1)[1]} {actor}')
+                        print(f'Skuespiller {inp.split(" ", 1)[1]} har spilt sammen med {actor}')
 
         elif inp.split(' ')[0] == 'getPlaysByDate':
             plays = Play.get_plays_on_date(cursor, inp.split(' ')[1])

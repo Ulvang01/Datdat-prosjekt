@@ -921,7 +921,7 @@ class Actor():
         actors = []
         if rows:
             for row in rows:
-                actors.append((f'Actor={row[0]} Play={row[1]}'))
+                actors.append((f'{row[0]} i stykket {row[1]}'))
             return actors
         return None
     
