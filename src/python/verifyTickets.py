@@ -3,78 +3,55 @@ import os
 import sqlite3
 import datetime
 
-from src.python.models import BillettPris, Teaterstykket, Visning, Sal, Rad, Stol, BillettKjøp, KundeProfil, Område, Billett
+from src.python.models import TicketPrice, Play, Screening, Scene, Row, Chair, TicketPurchase, CustomerProfile, Area, Ticket
 
-avspillingPath = os.path.join("src", "res", "avspillingsdager.txt")
-kongsemnenePirsPath = os.path.join("src", "res", "priser-Kongsemnene.txt")
+screeningPath = os.path.join("src", "res", "screening-dates.txt")
 
 hovedScenePath = os.path.join("src", "res", "hovedscenen.txt")
 gamleScenePath = os.path.join("src", "res", "gamle-scene.txt")
 
-
-def getPris(cursor: sqlite3.Cursor, stykke: Teaterstykket):
-    id = cursor.execute("SELECT id FROM BillettPris WHERE teaterstykket = ? AND billett_type = ?", (stykke.id,"Ordinær")).fetchone()[0]
-    return BillettPris.get_by_id(cursor, id)
-
-def getVisning(cursor: sqlite3.Cursor, date: str, stykke: Teaterstykket):
+def getVisning(cursor: sqlite3.Cursor, date: str, play: Play):
     date = map(int, date[5:].split('-'))
     date = datetime.date(*date)
-    return Visning.get_by_dato_and_teaterstykke(cursor, date, stykke)
-
-def getStykkeBySal(cursor: sqlite3.Cursor, sal: Sal):
-    id = cursor.execute("SELECT id FROM Teaterstykket WHERE sal = ?", (sal.navn,)).fetchone()[0]
-    return Teaterstykket.get_by_id(cursor, id)
-
-def getStol(cursor: sqlite3.Cursor, stolnr: str, rad: Rad):
-    id = cursor.execute("SELECT id FROM Stol WHERE stol_nr = ? AND rad = ?", (stolnr, rad.id)).fetchone()[0]
-    return Stol.get_by_id(cursor, id)
-
-def getKjøp(cursor: sqlite3.Cursor, tid: str, dato: datetime.date, user: KundeProfil):
-    id = cursor.execute("SELECT id FROM BillettKjøp WHERE tid = ? AND dato = ? AND kunde = ?", (tid, dato, user.id)).fetchone()[0]
-    return BillettKjøp.get_by_id(cursor, id)
-
-
+    return Screening.get_by_date_and_play(cursor, date, play)
 
 def verifyUser(cursor: sqlite3.Cursor) -> int:
     defaultName = "default"
-    userAlreadyExists = cursor.execute("SELECT id FROM Kundeprofil WHERE navn = ?", (defaultName,)).fetchall()
-    
-    if not userAlreadyExists:
-        defaultUser = KundeProfil(None, defaultName, "", "")
-        defaultUser.insert(cursor)
-    
-    # return user
-    userid = cursor.execute("SELECT id FROM Kundeprofil WHERE navn = ?", (defaultName,)).fetchone()[0] 
-    return KundeProfil.get_by_id(cursor, userid)
 
-def verification(cursor: sqlite3.Cursor, salnavn: str, user: KundeProfil, sceneLines: list['str']):
-    sal = Sal.get_by_name(cursor, salnavn)
-    stykke = getStykkeBySal(cursor, sal)
-    pris = getPris(cursor, stykke)
-    visning = getVisning(cursor, sceneLines[-1], stykke)
+    defaultUser = CustomerProfile(None, defaultName, "dummyAddress", "")
+    defaultUser.insert(cursor)    
+    defaultUser = CustomerProfile.get_by_name_and_address(cursor, defaultName, "dummyAddress")
     
-    kjøp = BillettKjøp(None, stykke.tid, visning.dato, user)
-    kjøp.insert(cursor)
-    kjøp = getKjøp(cursor, kjøp.time, kjøp.dato, kjøp.kundeProfile)
+    return defaultUser
 
-    areas = Område.get_by_sal(cursor, sal)
+def verification(cursor: sqlite3.Cursor, scene_name: str, user: CustomerProfile, sceneLines: list['str']):
+    scene = Scene.get_by_name(cursor, scene_name)
+    play = Play.get_by_scene(cursor, scene)
+    price = TicketPrice.get_by_play_and_type(cursor, play, "Ordinær")
+    screening = getVisning(cursor, sceneLines[-1], play)
+    
+    purchase = TicketPurchase(None, play.time, screening.date, user)
+    purchase.insert(cursor)
+    purchase = TicketPurchase.get_by_time_date_and_customer(cursor, play.time, screening.date, user)
+
+    areas = Area.get_by_scene(cursor, scene)
     sortedAreas = []
     for line in sceneLines:
         if not re.match(r"\d", line):
             for area in areas:
-                if line.strip() == area.navn:
+                if line.strip() == area.name:
                     sortedAreas.append(area)
     areas = sortedAreas
 
     return {
-        'sal': sal,
-        'visning': visning,
-        'pris': pris,
-        'kjøp': kjøp,
+        'scene': scene,
+        'screening': screening,
+        'price': price,
+        'purchase': purchase,
         'areas': areas,
     }
 
-def verifyHovedscenePurchase(cursor: sqlite3.Cursor, user: KundeProfil) -> None:
+def verifyHovedscenePurchase(cursor: sqlite3.Cursor, user: CustomerProfile) -> None:
     with open(hovedScenePath, 'r') as hovedscene:
         hovedsceneLines = hovedscene.readlines()
         hovedscene.close()
@@ -93,17 +70,14 @@ def verifyHovedscenePurchase(cursor: sqlite3.Cursor, user: KundeProfil) -> None:
         
         for charIndex in range(len(line)):
             if line[charIndex] == '1':
-                radid = cursor.execute("SELECT id FROM Rad WHERE område = ? AND radnr = ?", (result['areas'][areaIndex].id, rowNr)).fetchone()[0]
-                rad = Rad(radid, rowNr, result['areas'][areaIndex])
-                
-                stol = getStol(cursor, (charIndex+1)+(rowNr - 1)*len(hovedsceneLines[rowNr - 1]), rad)
-
-                ticket = Billett(None, result['visning'], stol, result['pris'], result['kjøp'])
+                row = Row.get_by_area_and_row_num(cursor, result['areas'][areaIndex], rowNr)
+                chair = Chair.get_by_row_and_num(cursor, row, (charIndex+1)+(rowNr - 1)*len(hovedsceneLines[rowNr - 1]))
+                ticket = Ticket(None, result['screening'], chair, result['price'], result['purchase'])
                 tickets.append(ticket)
     
-    Billett.upsert_batch(cursor, tickets)
+    Ticket.upsert_batch(cursor, tickets)
 
-def verifyGamlescenePurchase(cursor: sqlite3.Cursor, user: KundeProfil) -> None:
+def verifyGamlescenePurchase(cursor: sqlite3.Cursor, user: CustomerProfile) -> None:
     with open(gamleScenePath, 'r') as gamlescene:
         gamlesceneLines = gamlescene.readlines()
         gamlescene.close()
@@ -124,18 +98,19 @@ def verifyGamlescenePurchase(cursor: sqlite3.Cursor, user: KundeProfil) -> None:
         
         for charIndex in range(len(line)):
             if line[charIndex] == '1':
-                radid = cursor.execute("SELECT id FROM Rad WHERE område = ? AND radnr = ?", (result['areas'][areaIndex].id, rowNr)).fetchone()[0]
-                rad = Rad(radid, rowNr, result['areas'][areaIndex])
-                stol = getStol(cursor, charIndex+1, rad)
-                ticket = Billett(None, result['visning'], stol, result['pris'], result['kjøp'])
+                row = Row.get_by_area_and_row_num(cursor, result['areas'][areaIndex], rowNr)
+                chair = Chair.get_by_row_and_num(cursor, row, charIndex+1)
+                ticket = Ticket(None, result['screening'], chair, result['price'], result['purchase'])
                 tickets.append(ticket)
-    Billett.upsert_batch(cursor, tickets)
+    Ticket.upsert_batch(cursor, tickets)
 
 
 def verifyTickets(conn: sqlite3.Connection) -> None:
     cursor = conn.cursor()
+    print("Adding dummy user...")
     user = verifyUser(cursor)
-    print(user)
+    
+    print("Verifying tickets...")
     verifyHovedscenePurchase(cursor, user)
     verifyGamlescenePurchase(cursor, user)
     conn.commit()
