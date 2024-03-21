@@ -47,6 +47,32 @@ def verifyUser(cursor: sqlite3.Cursor) -> int:
     userid = cursor.execute("SELECT id FROM Kundeprofil WHERE navn = ?", (defaultName,)).fetchone()[0] 
     return KundeProfil.get_by_id(cursor, userid)
 
+def verification(cursor: sqlite3.Cursor, salnavn: str, user: KundeProfil, sceneLines: list['str']):
+    sal = Sal.get_by_name(cursor, salnavn)
+    stykke = getStykkeBySal(cursor, sal)
+    pris = getPris(cursor, stykke)
+    visning = getVisning(cursor, sceneLines[-1], stykke)
+    
+    kjøp = BillettKjøp(None, stykke.tid, visning.dato, user)
+    kjøp.insert(cursor)
+    kjøp = getKjøp(cursor, kjøp.time, kjøp.dato, kjøp.kundeProfile)
+
+    areas = Område.get_by_sal(cursor, sal)
+    sortedAreas = []
+    for line in sceneLines:
+        if not re.match(r"\d", line):
+            for area in areas:
+                if line.strip() == area.navn:
+                    sortedAreas.append(area)
+    areas = sortedAreas
+
+    return {
+        'sal': sal,
+        'visning': visning,
+        'pris': pris,
+        'kjøp': kjøp,
+        'areas': areas,
+    }
 
 def verifyHovedscenePurchase(cursor: sqlite3.Cursor, user: KundeProfil) -> None:
     with open(hovedScenePath, 'r') as hovedscene:
@@ -54,48 +80,25 @@ def verifyHovedscenePurchase(cursor: sqlite3.Cursor, user: KundeProfil) -> None:
         hovedscene.close()
     
     hovedsceneLines = [line.strip() for line in hovedsceneLines[::-1]]
-    
-    sal = Sal.get_by_name(cursor, "Hovedscene")
-    stykke = getStykkeBySal(cursor, sal)
-    pris = getPris(cursor, stykke)
-    
-    #print(pris)
-    
-    visning = getVisning(cursor, hovedsceneLines[-1], stykke)
-    
-    hovedsceneKjøp = BillettKjøp(None, stykke.tid, visning.dato, user)
-    hovedsceneKjøp.insert(cursor)
-    hovedsceneKjøp = getKjøp(cursor, hovedsceneKjøp.time, hovedsceneKjøp.dato, hovedsceneKjøp.kundeProfile)
-    #print(hovedsceneKjøp)
-    
-    areas = Område.get_by_sal(cursor, sal)
-    areaName = ""
-    for line in hovedsceneLines:
-        if not re.match(r"\d", line):
-            areaName = line.strip()
-            break
-    
-    area = None
-    for element in areas:
-        if element.navn == areaName:
-            area = element
-            break
-    
+    result = verification(cursor, 'Hovedscene', user, hovedsceneLines)
+
     tickets = []
-    for lineIndex in range(len(hovedsceneLines)):
-        if not re.match(r"\d", hovedsceneLines[lineIndex]):
-            break
+    areaIndex = 0
+    rowNr = 0
+    for line in hovedsceneLines:
+        rowNr += 1
+        if not re.match(r"\d", line):
+            areaIndex += 1
+            continue
         
-        #print("raden:", lineIndex+1)
-        
-        for charIndex in range(len(hovedsceneLines[lineIndex])):
-            if hovedsceneLines[lineIndex][charIndex] == '1':
-                radid = cursor.execute("SELECT id FROM Rad WHERE område = ? AND radnr = ?", (area.id, lineIndex+1)).fetchone()[0]
-                rad = Rad(radid, lineIndex+1, area)
+        for charIndex in range(len(line)):
+            if line[charIndex] == '1':
+                radid = cursor.execute("SELECT id FROM Rad WHERE område = ? AND radnr = ?", (result['areas'][areaIndex].id, rowNr)).fetchone()[0]
+                rad = Rad(radid, rowNr, result['areas'][areaIndex])
                 
-                stol = getStol(cursor, (charIndex+1)+(lineIndex)*len(hovedsceneLines[lineIndex]), rad)
-                #print(stol)
-                ticket = Billett(None, visning, stol, pris, hovedsceneKjøp)
+                stol = getStol(cursor, (charIndex+1)+(rowNr - 1)*len(hovedsceneLines[rowNr - 1]), rad)
+
+                ticket = Billett(None, result['visning'], stol, result['pris'], result['kjøp'])
                 tickets.append(ticket)
     
     Billett.upsert_batch(cursor, tickets)
@@ -104,28 +107,10 @@ def verifyGamlescenePurchase(cursor: sqlite3.Cursor, user: KundeProfil) -> None:
     with open(gamleScenePath, 'r') as gamlescene:
         gamlesceneLines = gamlescene.readlines()
         gamlescene.close()
+
+    gamlesceneLines = [line.strip() for line in gamlesceneLines[::-1]]
     
-    dateLine = gamlesceneLines[0].strip()
-    gamlesceneLines = gamlesceneLines[1:]
-    gamlesceneLines = gamlesceneLines[::-1]
-    sal = Sal.get_by_name(cursor, "Gamle-scene")
-    stykke = getStykkeBySal(cursor, sal)
-    pris = getPris(cursor, stykke)
-    visning = getVisning(cursor, dateLine, stykke)
-    
-    gamlesceneKjøp = BillettKjøp(None, stykke.tid, visning.dato, user)
-    gamlesceneKjøp.insert(cursor)
-    gamlesceneKjøp = getKjøp(cursor, gamlesceneKjøp.time, gamlesceneKjøp.dato, gamlesceneKjøp.kundeProfile)
-    
-    areas = Område.get_by_sal(cursor, sal)
-    sortedAreas = []
-    print(areas)
-    for line in gamlesceneLines:
-        if not re.match(r"\d", line):
-            for area in areas:
-                if line.strip() == area.navn:
-                    sortedAreas.append(area)
-    areas = sortedAreas
+    result = verification(cursor, 'Gamle-scene', user, gamlesceneLines)
     
     areaIndex = 0
     rowNr = 0
@@ -139,10 +124,10 @@ def verifyGamlescenePurchase(cursor: sqlite3.Cursor, user: KundeProfil) -> None:
         
         for charIndex in range(len(line)):
             if line[charIndex] == '1':
-                radid = cursor.execute("SELECT id FROM Rad WHERE område = ? AND radnr = ?", (areas[areaIndex].id, rowNr)).fetchone()[0]
-                rad = Rad(radid, rowNr, areas[areaIndex])
+                radid = cursor.execute("SELECT id FROM Rad WHERE område = ? AND radnr = ?", (result['areas'][areaIndex].id, rowNr)).fetchone()[0]
+                rad = Rad(radid, rowNr, result['areas'][areaIndex])
                 stol = getStol(cursor, charIndex+1, rad)
-                ticket = Billett(None, visning, stol, pris, gamlesceneKjøp)
+                ticket = Billett(None, result['visning'], stol, result['pris'], result['kjøp'])
                 tickets.append(ticket)
     Billett.upsert_batch(cursor, tickets)
 
