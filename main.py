@@ -1,11 +1,14 @@
 import sqlite3
 import os
+import re
 
 from src.python.verifyTeaterstykker import verifyTeaterstykkene
 from src.python.verifyDB import verifyDB
 from src.python.verifyScenes import verifyScenes
 from src.python.verifyMedvirkende import verifyMedvirkendeAndStatus
 from src.python.verifyTickets import verifyTickets
+
+from src.python.seatPurchase import getFreeSeats, makeCustomerProfile, purchaseTickets
 from src.python.models import Skuespiller, Teaterstykket, Akt, Visning, Billett
 
 database = os.path.join("src", "sql", "database.db")
@@ -25,6 +28,9 @@ def main():
             print(" - verify  --> Verify the database and populate it with some data.")
             print(" - getActorsByPlay <name of play>  --> Get all actors in a given play.")
             print(" - getBestsellingScreening  --> Get the best selling screening.")
+            print(" - makeCustomerProfile <name>, <phone number>, <address>  --> Make a new customer profile.")
+            print(" - getFreeSeats <name of play>, <date>  --> Get the number of free seats in each row.")
+            print(" - purchaseTickets <name of play>, <date>, <row>, <area>, <amount>, <customer name>, <ticket type>  --> Purchase an amount of tickets on a row.")
             print(" - getPlaysByDate <yyyy-mm-dd>  --> Get all plays on a given date.")
         elif inp == 'verify':
             verifyDB(conn)
@@ -48,7 +54,7 @@ def main():
                 for actor in connection:
                     if inp.split(' ', 1)[1] in actor:
                         None
-                    else: print(f'Skuespiller_1={inp.split(' ', 1)[1]} ' + actor)
+                    else: print(f'Skuespiller_1={inp.split(" ", 1)[1]} ' + actor)
 
         elif inp.split(' ')[0] == 'getPlaysOnDate':
             plays = Teaterstykket.get_plays_on_date(cursor, inp.split(' ')[1])
@@ -62,6 +68,29 @@ def main():
             best_play = Visning.get_bestselling(cursor)
             print("Best selling screening is: ", best_play[0].teaterstykket.navn, " at ", best_play[0].dato, ".")
             print("And it has sold: ", best_play[1], " tickets.")
+        if inp.split(' ')[0] == 'makeCustomerProfile':
+            inp = inp[inp.find(' ')+1:]
+            argumentList = [element.strip() for element in inp.split(',')]
+            if len(argumentList) != 3:
+                print("Invalid number of arguments")
+            else:
+                makeCustomerProfile(cursor, *argumentList)
+                conn.commit()
+        if inp.split(' ')[0] == 'getFreeSeats':
+            inp = inp[inp.find(' ')+1:]
+            argumentList = [element.strip() for element in inp.split(',')]
+            if len(argumentList) != 2:
+                print("Invalid number of arguments")
+            else:
+                getFreeSeats(cursor, *argumentList)
+        if inp.split(' ')[0] == 'purchaseTickets':
+            inp = inp[inp.find(' ')+1:]
+            argumentList = [element.strip() for element in inp.split(',')]
+            if len(argumentList) != 7:
+                print("Invalid number of arguments")
+            else:
+                purchaseTickets(cursor, *argumentList)
+                conn.commit()
 
     conn.close()
 if __name__ == "__main__":

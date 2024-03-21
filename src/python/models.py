@@ -589,7 +589,7 @@ class BillettKjøp():
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return BillettKjøp(row[0], row[1], row[2], KundeProfil.get_by_id(cursor, row[3]))
+            return BillettKjøp(row[0], row[3], row[2], KundeProfil.get_by_id(cursor, row[1]))
         return None
 
     @staticmethod
@@ -599,7 +599,7 @@ class BillettKjøp():
         rows = cursor.fetchall()
         billettkjøp = []
         for row in rows:
-            billettkjøp.append(BillettKjøp(row[0], row[1], row[2], KundeProfil.get_by_id(cursor, row[3])))
+            billettkjøp.append(BillettKjøp(row[0], row[3], row[2], KundeProfil.get_by_id(cursor, row[1])))
         return billettkjøp
     
     @staticmethod
