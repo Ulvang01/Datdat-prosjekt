@@ -2,1321 +2,1265 @@ import datetime
 import sqlite3
 from typing import List, Optional, Tuple
 
-class Sal:
-    def __init__(self, navn: str):
-        self.navn = navn
+class Scene:
+    def __init__(self, name: str):
+        self.name = name
 
     def __str__(self) -> str:
-        return f"Sal(navn={self.navn})"
+        return f"Scene(name={self.name})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO Sal (navn) VALUES (?)
-        ON CONFLICT(navn) DO NOTHING
+        INSERT INTO Scene (name) VALUES (?)
+        ON CONFLICT(name) DO NOTHING
         """
-        cursor.execute(query, (self.navn,))
+        cursor.execute(query, (self.name,))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM Sal WHERE navn=?"
-            cursor.execute(query, (self.navn,))
+            query = "DELETE FROM Scene WHERE name=?"
+            cursor.execute(query, (self.name,))
             return True
         except Exception as e:
-            print(f"Error deleting Sal: {e}")
+            print(f"Error deleting Scene: {e}")
             return False
 
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['Sal']:
-        cursor.execute("SELECT * FROM Sal")
-        return [Sal(row[0]) for row in cursor.fetchall()]
+    def get_all(cursor: sqlite3.Cursor) -> List['Scene']:
+        cursor.execute("SELECT * FROM Scene")
+        return [Scene(row[0]) for row in cursor.fetchall()]
     
     @staticmethod
-    def get_by_name(cursor: sqlite3.Cursor, navn: str) -> Optional['Sal']:
-        query = "SELECT * FROM Sal WHERE navn=?"
-        cursor.execute(query, (navn,))
+    def get_by_name(cursor: sqlite3.Cursor, name: str) -> Optional['Scene']:
+        query = "SELECT * FROM Scene WHERE name=?"
+        cursor.execute(query, (name,))
         row = cursor.fetchone()
         if row:
-            return Sal(row[0])
+            return Scene(row[0])
         return None
 
 
-class Område:
-    def __init__(self, id: int, navn: str, sal: Sal):
+class Area:
+    def __init__(self, id: int, name: str, scene: Scene):
         self.id = id
-        self.navn = navn
-        self.sal = sal
+        self.name = name
+        self.scene = scene
 
     def __repr__(self) -> str:
-        return f"Område(id={self.id}, navn={self.navn}, sal={self.sal.navn})"
+        return f"Area(id={self.id}, name={self.name}, scene={self.scene.name})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO Område (navn, sal) VALUES (?, ?)
-        ON CONFLICT(navn, sal) DO NOTHING
+        INSERT INTO Area (name, scene) VALUES (?, ?)
+        ON CONFLICT(name, scene) DO NOTHING
         """
-        cursor.execute(query, (self.navn, self.sal.navn))
+        cursor.execute(query, (self.name, self.scene.name))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM Område WHERE navn=? AND sal=?"
-            cursor.execute(query, (self.navn, self.sal.navn))
+            query = "DELETE FROM Area WHERE name=? AND scene=?"
+            cursor.execute(query, (self.name, self.scene.name))
             return True
         except Exception as e:
-            print(f"Error deleting Område: {e}")
+            print(f"Error deleting Area: {e}")
             return False
         
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE Område SET navn=?, sal=? WHERE id=?"
-        cursor.execute(query, (self.navn, self.sal.navn, self.id))
+        query = "UPDATE Area SET name=?, scene=? WHERE id=?"
+        cursor.execute(query, (self.name, self.scene.name, self.id))
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, områder: List['Område']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, arear: List['Area']) -> None:
         query = """
-        INSERT INTO Område (navn, sal) VALUES (?, ?)
-        ON CONFLICT(navn, sal) DO NOTHING
+        INSERT INTO Area (name, scene) VALUES (?, ?)
+        ON CONFLICT(name, scene) DO NOTHING
         """
-        values = [(område.navn, område.sal.navn) for område in områder]
+        values = [(area.name, area.scene.name) for area in arear]
         cursor.executemany(query, values)
     
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['Område']:
-        query = "SELECT * FROM Område"
+    def get_all(cursor: sqlite3.Cursor) -> List['Area']:
+        query = "SELECT * FROM Area"
         cursor.execute(query)
-        return [Område(row[0], row[1], Sal.get_by_name(row[2])) for row in cursor.fetchall()]
+        return [Area(row[0], row[1], Scene.get_by_name(row[2])) for row in cursor.fetchall()]
     
     @staticmethod
-    def get_by_sal(cursor: sqlite3.Cursor, sal: Sal) -> List['Område']:
-        query = "SELECT * FROM Område WHERE sal=?"
-        cursor.execute(query, (sal.navn,))
-        return [Område(row[0], row[1], sal) for row in cursor.fetchall()]
+    def get_by_scene(cursor: sqlite3.Cursor, scene: Scene) -> List['Area']:
+        query = "SELECT * FROM Area WHERE scene=?"
+        cursor.execute(query, (scene.name,))
+        return [Area(row[0], row[1], scene) for row in cursor.fetchall()]
     
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Område']:
-        query = "SELECT * FROM Område WHERE id=?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Area']:
+        query = "SELECT * FROM Area WHERE id=?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            sal = Sal.get_by_name(cursor, row[2])
-            if sal:
-                return Område(row[0], row[1], sal)
+            scene = Scene.get_by_name(cursor, row[2])
+            if scene:
+                return Area(row[0], row[1], scene)
         return None
 
-class Rad:
-    def __init__(self, id: int, radnr: int, område: Område):
+class Row:
+    def __init__(self, id: int, row_num: int, area: Area):
         self.id = id
-        self.radnr = radnr
-        self.område = område
+        self.row_num = row_num
+        self.area = area
 
     def __str__(self) -> str:
-        return f"Rad(id={self.id}, radnr={self.radnr}, område={self.område.id})"  # Assuming område is an instance of Område
+        return f"Row(id={self.id}, row_num={self.row_num}, area={self.area.id})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO Rad (id, radnr, område) VALUES (?, ?, ?)
+        INSERT INTO Row (id, row_num, area) VALUES (?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        cursor.execute(query, (self.id, self.radnr, self.område.id))
+        cursor.execute(query, (self.id, self.row_num, self.area.id))
 
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM Rad WHERE id = ?"
+            query = "DELETE FROM Row WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting Rad: {e}")
+            print(f"Error deleting Row: {e}")
             return False
     
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE Rad SET radnr = ?, område = ? WHERE id = ?"
-        cursor.execute(query, (self.radnr, self.område.id, self.id))
+        query = "UPDATE Row SET row_num = ?, area = ? WHERE id = ?"
+        cursor.execute(query, (self.row_num, self.area.id, self.id))
     
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Rad']:
-        query = "SELECT * FROM Rad WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Row']:
+        query = "SELECT * FROM Row WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            område = Område.get_by_id(cursor, row[2])
-            if område:
-                return Rad(row[0], row[1], område)
+            area = Area.get_by_id(cursor, row[2])
+            if area:
+                return Row(row[0], row[1], area)
         return None
 
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['Rad']:
-        query = "SELECT * FROM Rad"
+    def get_all(cursor: sqlite3.Cursor) -> List['Row']:
+        query = "SELECT * FROM Row"
         cursor.execute(query)
         rows = cursor.fetchall()
-        rader = []
+        rows = []
         for row in rows:
-            område = Område.get_by_id(cursor, row[2])
-            if område:
-                rader.append(Rad(row[0], row[1], område))
-        return rader
+            area = Area.get_by_id(cursor, row[2])
+            if area:
+                rows.append(Row(row[0], row[1], area))
+        return rows
     
     @staticmethod
-    def get_by_område_and_radnr(cursor: sqlite3.Cursor, område: Område, radnr: int) -> List['Rad']:
-        query = "SELECT * FROM Rad WHERE område = ? AND radnr = ?"
-        cursor.execute(query, (område.id, radnr))
+    def get_by_area_and_row_num(cursor: sqlite3.Cursor, area: Area, row_num: int) -> List['Row']:
+        query = "SELECT * FROM Row WHERE area = ? AND row_num = ?"
+        cursor.execute(query, (area.id, row_num))
         rows = cursor.fetchone()
-        rad = Rad(rows[0], radnr, område)
-        return rad
+        row = Row(rows[0], row_num, area)
+        return row
     
     @staticmethod
-    def get_by_sal(cursor: sqlite3.Cursor, sal: Sal) -> List['Rad']:
-        query = "SELECT * FROM Rad WHERE område IN (SELECT id FROM Område WHERE sal = ?)"
-        cursor.execute(query, (sal.navn,))
+    def get_by_scene(cursor: sqlite3.Cursor, scene: Scene) -> List['Row']:
+        query = "SELECT * FROM Row WHERE area IN (SELECT id FROM Area WHERE scene = ?)"
+        cursor.execute(query, (scene.name,))
         rows = cursor.fetchall()
-        rader = []
+        rows = []
         for row in rows:
-            område = Område.get_by_id(cursor, row[2])
-            if område:
-                rader.append(Rad(row[0], row[1], område))
-        return rader
+            area = Area.get_by_id(cursor, row[2])
+            if area:
+                rows.append(Row(row[0], row[1], area))
+        return rows
 
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, rad_list: List['Rad']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, row_list: List['Row']) -> None:
         query = """
-        INSERT INTO Rad (radnr, område) VALUES ( ?, ?)
+        INSERT INTO Row (row_num, area) VALUES ( ?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(radnr, område) DO NOTHING
+        ON CONFLICT(row_num, area) DO NOTHING
         """
-        values = [(rad.radnr, rad.område.id) for rad in rad_list]
+        values = [(row.row_num, row.area.id) for row in row_list]
         print(values)
         cursor.executemany(query, values)
 
-class Stol:
-    def __init__(self, id: int, stolnr: int, rad: Rad):
+class Chair:
+    def __init__(self, id: int, chair_num: int, row: Row):
         self.id = id
-        self.stolnr = stolnr
-        self.rad = rad
+        self.chair_num = chair_num
+        self.row = row
 
     def __str__(self) -> str:
-        return f"Stol(id={self.id}, stolnr={self.stolnr}, rad={self.rad.id})"
+        return f"Chair(id={self.id}, chair_num={self.chair_num}, row={self.row.id})"
 
     def insert(self, cursor: sqlite3.Cursor) -> None:
-        query = "INSERT INTO Stol (id, stol_nr, rad) VALUES (?, ?, ?)"
-        cursor.execute(query, (self.id, self.stolnr, self.rad.id))
+        query = "INSERT INTO Chair (id, chair_num, row) VALUES (?, ?, ?)"
+        cursor.execute(query, (self.id, self.chair_num, self.row.id))
 
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE Stol SET stol_nr = ?, rad = ? WHERE id = ?"
-        cursor.execute(query, (self.stolnr, self.rad.id, self.id))
+        query = "UPDATE Chair SET chair_num = ?, row = ? WHERE id = ?"
+        cursor.execute(query, (self.chair_num, self.row.id, self.id))
 
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM Stol WHERE id = ?"
+            query = "DELETE FROM Chair WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting Stol: {e}")
+            print(f"Error deleting Chair: {e}")
             return False
 
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Stol']:
-        query = "SELECT * FROM Stol WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Chair']:
+        query = "SELECT * FROM Chair WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            rad = Rad.get_by_id(cursor, row[2]) 
-            if rad:
-                return Stol(row[0], row[1], rad)
+            row = Row.get_by_id(cursor, row[2]) 
+            if row:
+                return Chair(row[0], row[1], row)
         return None
 
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['Stol']:
-        query = "SELECT * FROM Stol"
+    def get_all(cursor: sqlite3.Cursor) -> List['Chair']:
+        query = "SELECT * FROM Chair"
         cursor.execute(query)
         rows = cursor.fetchall()
-        stoler = []
+        chairs = []
         for row in rows:
-            rad = Rad.get_by_id(cursor, row[2])
-            if rad:
-                stoler.append(Stol(row[0], row[1], rad))
-        return stoler
+            row = Row.get_by_id(cursor, row[2])
+            if row:
+                chairs.append(Chair(row[0], row[1], row))
+        return chairs
     
     @staticmethod
-    def get_by_sal(cursor: sqlite3.Cursor, sal: Sal) -> List['Stol']:
-        query = "SELECT * FROM Stol WHERE rad IN (SELECT id FROM Rad WHERE område IN (SELECT id FROM Område WHERE sal = ?))"
-        cursor.execute(query, (sal.navn,))
+    def get_by_scene(cursor: sqlite3.Cursor, scene: Scene) -> List['Chair']:
+        query = "SELECT * FROM Chair WHERE row IN (SELECT id FROM Row WHERE area IN (SELECT id FROM Area WHERE scene = ?))"
+        cursor.execute(query, (scene.name,))
         rows = cursor.fetchall()
-        stoler = []
+        chairs = []
         for row in rows:
-            rad = Rad.get_by_id(cursor, row[2])
-            if rad:
-                stoler.append(Stol(row[0], row[1], rad))
-        return stoler
+            chairs_row = Row.get_by_id(cursor, row[2])
+            if chairs_row:
+                chairs.append(Chair(row[0], row[1], chairs_row))
+        return chairs
 
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, stol_list: List['Stol']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, chair_list: List['Chair']) -> None:
         query = """
-        INSERT INTO Stol (stol_nr, rad) VALUES (?, ?)
+        INSERT INTO Chair (chair_num, row) VALUES (?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(stol_nr, rad) DO NOTHING
+        ON CONFLICT(chair_num, row) DO NOTHING
         """
-        values = [(stol.stolnr, stol.rad.id) for stol in stol_list]
+        values = [(chair.chair_num, chair.row.id) for chair in chair_list]
         cursor.executemany(query, values)
 
-class Teaterstykket():
-    def __init__(self, id: int, navn: str, forfatter: str, tid: str, sal: Sal):
+class Play():
+    def __init__(self, id: int, name: str, author: str, time: str, scene: Scene):
         self.id = id
-        self.navn = navn
-        self.forfatter = forfatter
-        self.tid = tid
-        self.sal = sal
+        self.name = name
+        self.author = author
+        self.time = time
+        self.scene = scene
     
     def __str__(self):
-        return f"teaterstykket(id={self.id}, navn={self.navn}, forfatter={self.forfatter}, tid={self.tid})"
+        return f"play(id={self.id}, name={self.name}, author={self.author}, time={self.time})"
 
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO Teaterstykket (id, navn, forfatter, tid, sal) VALUES (?, ?, ?, ?, ?)
+        INSERT INTO Play (id, name, author, time, scene) VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        cursor.execute(query, (self.id, self.navn, self.forfatter, self.tid, self.sal.navn))
+        cursor.execute(query, (self.id, self.name, self.author, self.time, self.scene.name))
 
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM Teaterstykket WHERE id = ?"
+            query = "DELETE FROM Play WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting Teaterstykket: {e}")
+            print(f"Error deleting Play: {e}")
             return False
         
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE Teaterstykket SET navn = ?, forfatter = ?, tid = ? WHERE id = ?"
-        cursor.execute(query, (self.navn, self.forfatter, self.tid, self.id))
+        query = "UPDATE Play SET name = ?, author = ?, time = ? WHERE id = ?"
+        cursor.execute(query, (self.name, self.author, self.time, self.id))
 
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Teaterstykket']:
-        query = "SELECT * FROM Teaterstykket WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Play']:
+        query = "SELECT * FROM Play WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return Teaterstykket(id, row[1], row[2], row[4], row[3])
+            return Play(id, row[1], row[2], row[4], row[3])
         return None
     
     @staticmethod
-    def get_by_name(cursor: sqlite3.Cursor, navn: str) -> Optional['Teaterstykket']:
-        query = "SELECT * FROM Teaterstykket WHERE navn = ?"
-        cursor.execute(query, (navn,))
+    def get_by_name(cursor: sqlite3.Cursor, name: str) -> Optional['Play']:
+        query = "SELECT * FROM Play WHERE name = ?"
+        cursor.execute(query, (name,))
         row = cursor.fetchone()
         if row:
-            return Teaterstykket(int(row[0]), row[1], row[2], row[4], row[3])
+            return Play(int(row[0]), row[1], row[2], row[4], row[3])
         return None
 
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['Teaterstykket']:
-        query = "SELECT * FROM Teaterstykket"
+    def get_all(cursor: sqlite3.Cursor) -> List['Play']:
+        query = "SELECT * FROM Play"
         cursor.execute(query)
         rows = cursor.fetchall()
-        teaterstykker = []
+        plays = []
         for row in rows:
-            teaterstykker.append(Teaterstykket(int(row[0]), row[1], row[2], row[4], row[3]))
-        return teaterstykker
+            plays.append(Play(int(row[0]), row[1], row[2], row[4], row[3]))
+        return plays
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, teaterstykke_list: List['Teaterstykket']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, play_list: List['Play']) -> None:
         query = """
-        INSERT INTO Teaterstykket (navn, forfatter, tid) VALUES (?, ?, ?)
+        INSERT INTO Play (name, author, time) VALUES (?, ?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(navn, forfatter) DO NOTHING
+        ON CONFLICT(name, author) DO NOTHING
         """
-        values = [(teaterstykket.navn, teaterstykket.forfatter, teaterstykket.tid) for teaterstykket in teaterstykke_list]
+        values = [(play.name, play.author, play.time) for play in play_list]
         cursor.executemany(query, values)
     
     @staticmethod
     def get_by_name(cursor: sqlite3.Cursor, name: str):
         query = """
-        SELECT * FROM Teaterstykket WHERE navn = ?
+        SELECT * FROM Play WHERE name = ?
         """
         cursor.execute(query, (name,))
-        teaterstykket = cursor.fetchone()
-        if teaterstykket:
-            return Teaterstykket(teaterstykket[0], teaterstykket[1], teaterstykket[2], teaterstykket[3], teaterstykket[4])
+        play = cursor.fetchone()
+        if play:
+            return Play(play[0], play[1], play[2], play[3], play[4])
         return None
 
 
-class Visning():
+class Screening():
     id: int
-    dato: datetime.date
-    teaterstykket: Teaterstykket
+    date: datetime.date
+    play: Play
 
-    def __init__(self, id: int, dato: datetime.date, teaterstykket: Teaterstykket):
+    def __init__(self, id: int, date: datetime.date, play: Play):
         self.id = id
-        self.dato = dato
-        self.teaterstykket = teaterstykket
+        self.date = date
+        self.play = play
 
     def __str__(self):
-        return f"Visning(id={self.id}, dato={self.dato}, teaterstykket={self.teaterstykket})"
+        return f"Screening(id={self.id}, date={self.date}, play={self.play})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO Visning (id, dato, teaterstykket) VALUES (?, ?, ?)
+        INSERT INTO Screening (id, date, play) VALUES (?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        cursor.execute(query, (self.id, self.dato, self.teaterstykket.id))
+        cursor.execute(query, (self.id, self.date, self.play.id))
 
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM Visning WHERE id = ?"
+            query = "DELETE FROM Screening WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting Visning: {e}")
+            print(f"Error deleting Screening: {e}")
             return False
         
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE Visning SET dato = ?, teaterstykket = ? WHERE id = ?"
-        cursor.execute(query, (self.dato, self.teaterstykket.id, self.id))
+        query = "UPDATE Screening SET date = ?, play = ? WHERE id = ?"
+        cursor.execute(query, (self.date, self.play.id, self.id))
 
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Visning']:
-        query = "SELECT * FROM Visning WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Screening']:
+        query = "SELECT * FROM Screening WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return Visning(row[0], row[1], Teaterstykket.get_by_id(cursor, row[2]))
+            return Screening(row[0], row[1], Play.get_by_id(cursor, row[2]))
         return None
     
     @staticmethod
-    def get_by_dato_and_teaterstykke(cursor: sqlite3.Cursor, dato: datetime.date, teaterstykket: Teaterstykket) -> Optional['Visning']:
-        query = "SELECT * FROM Visning WHERE dato = ? AND teaterstykket = ?"
-        cursor.execute(query, (dato, teaterstykket.id))
+    def get_by_date_and_play(cursor: sqlite3.Cursor, date: datetime.date, play: Play) -> Optional['Screening']:
+        query = "SELECT * FROM Screening WHERE date = ? AND play = ?"
+        cursor.execute(query, (date, play.id))
         row = cursor.fetchone()
         if row:
-            return Visning(row[0], row[1], teaterstykket)
+            return Screening(row[0], row[1], play)
         return None
 
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['Visning']:
-        query = "SELECT * FROM Visning"
+    def get_all(cursor: sqlite3.Cursor) -> List['Screening']:
+        query = "SELECT * FROM Screening"
         cursor.execute(query)
         rows = cursor.fetchall()
-        visninger = []
+        screenings = []
         for row in rows:
-            visninger.append(Visning(row[0], row[1], Teaterstykket.get_by_id(cursor, row[2])))
-        return visninger
+            screenings.append(Screening(row[0], row[1], Play.get_by_id(cursor, row[2])))
+        return screenings
     
     @staticmethod
-    def get_bestselling(cursor: sqlite3.Cursor) -> Optional[Tuple['Visning', int]]:
+    def get_bestselling(cursor: sqlite3.Cursor) -> Optional[Tuple['Screening', int]]:
         query = """
-        SELECT vising, COUNT(*) AS visingCount
-        FROM Billett
-        GROUP BY vising
-        ORDER BY visingCount DESC
+        SELECT screening, COUNT(*) AS screeningCount
+        FROM Ticket
+        GROUP BY screening
+        ORDER BY screeningCount DESC
         LIMIT 1;
         """
         cursor.execute(query)
         row = cursor.fetchone()
         if row:
-            return [Visning.get_by_id(cursor, row[0]), row[1]]
+            return [Screening.get_by_id(cursor, row[0]), row[1]]
         return None
 
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, visning_list: List['Visning']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, screening_list: List['Screening']) -> None:
         query = """
-        INSERT INTO Visning (dato, teaterstykket) VALUES (?, ?)
+        INSERT INTO Screening (date, play) VALUES (?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(dato, teaterstykket) DO NOTHING
+        ON CONFLICT(date, play) DO NOTHING
         """
-        values = [(visning.dato, visning.teaterstykket.id) for visning in visning_list]
+        values = [(screening.date, screening.play.id) for screening in screening_list]
         cursor.executemany(query, values)
 
-class BillettPris():
-    def __init__(self, id: int, pris: float, bilettType: str, teaterstykket: Teaterstykket):
+class TicketPrice():
+    def __init__(self, id: int, price: float, ticket_type: str, play: Play):
         self.id = id
-        self.pris = pris
-        self.bilettType = bilettType
-        self.teaterstykket = teaterstykket
+        self.price = price
+        self.ticket_type = ticket_type
+        self.play = play
 
     def __str__(self):
-        return f"BillettPris(id={self.id}, pris={self.pris}, billett_type={self.bilettType}, teaterstykket={self.teaterstykket})"
+        return f"TicketPrice(id={self.id}, price={self.price}, ticket_type={self.ticket_type}, play={self.play})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO BillettPris (id, pris, billett_type, teaterstykket) VALUES (?, ?, ?, ?)
+        INSERT INTO TicketPrice (id, price, ticket_type, play) VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        cursor.execute(query, (self.id, self.pris, self.bilettType, self.teaterstykket.id))
+        cursor.execute(query, (self.id, self.price, self.ticket_type, self.play.id))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM BillettPris WHERE id = ?"
+            query = "DELETE FROM TicketPrice WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting BillettPris: {e}")
+            print(f"Error deleting TicketPrice: {e}")
             return False
         
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE BillettPris SET pris = ?, billett_type = ?, teaterstykket = ? WHERE id = ?"
-        cursor.execute(query, (self.pris, self.bilettType, self.teaterstykket.id, self.id))
+        query = "UPDATE TicketPrice SET price = ?, ticket_type = ?, play = ? WHERE id = ?"
+        cursor.execute(query, (self.price, self.ticket_type, self.play.id, self.id))
 
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['BillettPris']:
-        query = "SELECT * FROM BillettPris WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['TicketPrice']:
+        query = "SELECT * FROM TicketPrice WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return BillettPris(row[0], row[3], row[1], Teaterstykket.get_by_id(cursor, row[2]))
+            return TicketPrice(row[0], row[3], row[1], Play.get_by_id(cursor, row[2]))
         return None
     
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['BillettPris']:
-        query = "SELECT * FROM BillettPris"
+    def get_all(cursor: sqlite3.Cursor) -> List['TicketPrice']:
+        query = "SELECT * FROM TicketPrice"
         cursor.execute(query)
         rows = cursor.fetchall()
-        billettpriser = []
+        ticketprices = []
         for row in rows:
-            billettpriser.append(BillettPris(row[0], row[1], row[2], Teaterstykket.get_by_id(cursor, row[3])))
-        return billettpriser
+            ticketprices.append(TicketPrice(row[0], row[1], row[2], Play.get_by_id(cursor, row[3])))
+        return ticketprices
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, billettpris_list: List['BillettPris']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, ticketprice_list: List['TicketPrice']) -> None:
         query = """
-        INSERT INTO BillettPris (pris, billett_type, teaterstykket) VALUES (?, ?, ?)
+        INSERT INTO TicketPrice (price, ticket_type, play) VALUES (?, ?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(billett_type, teaterstykket) DO NOTHING
+        ON CONFLICT(ticket_type, play) DO NOTHING
         """
-        values = [(billettpris.pris, billettpris.bilettType, billettpris.teaterstykket.id) for billettpris in billettpris_list]
+        values = [(ticketpirce.price, ticketpirce.ticket_type, ticketpirce.play.id) for ticketpirce in ticketprice_list]
         cursor.executemany(query, values)
 
-class KundeProfil():
-    def __init__(self, id: int, navn: str, adresse: str, telefon: str):
+class CustomerProfile():
+    def __init__(self, id: int, name: str, adress: str, telephone_num: str):
         self.id = id
-        self.navn = navn
-        self.adresse = adresse
-        self.telefon = telefon
+        self.name = name
+        self.adress = adress
+        self.telephone_num = telephone_num
 
     def __str__(self):
-        return f"KundeProfil(id={self.id}, navn={self.navn}, adresse={self.adresse}, telefon={self.telefon})"
+        return f"CustomerProfile(id={self.id}, name={self.name}, adress={self.adress}, telephone_num={self.telephone_num})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO KundeProfil (id, navn, adresse, telefon) VALUES (?, ?, ?, ?)
+        INSERT INTO CustomerProfile (id, name, adress, telephone_num) VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        cursor.execute(query, (self.id, self.navn, self.adresse, self.telefon))
+        cursor.execute(query, (self.id, self.name, self.adress, self.telephone_num))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM KundeProfil WHERE id = ?"
+            query = "DELETE FROM CustomerProfile WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting KundeProfil: {e}")
+            print(f"Error deleting CustomerProfile: {e}")
             return False
         
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE KundeProfil SET navn = ?, adresse = ?, telefon = ? WHERE id = ?"
-        cursor.execute(query, (self.navn, self.adresse, self.telefon, self.id))
+        query = "UPDATE CustomerProfile SET name = ?, adress = ?, telephone_num = ? WHERE id = ?"
+        cursor.execute(query, (self.name, self.adress, self.telephone_num, self.id))
 
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['KundeProfil']:
-        query = "SELECT * FROM KundeProfil WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['CustomerProfile']:
+        query = "SELECT * FROM CustomerProfile WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return KundeProfil(row[0], row[1], row[2], row[3])
+            return CustomerProfile(row[0], row[1], row[2], row[3])
         return None
     
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['KundeProfil']:
-        query = "SELECT * FROM KundeProfil"
+    def get_all(cursor: sqlite3.Cursor) -> List['CustomerProfile']:
+        query = "SELECT * FROM CustomerProfile"
         cursor.execute(query)
         rows = cursor.fetchall()
-        kundeprofiler = []
+        customerprofiles = []
         for row in rows:
-            kundeprofiler.append(KundeProfil(row[0], row[1], row[2], row[3]))
-        return kundeprofiler
+            customerprofiles.append(CustomerProfile(row[0], row[1], row[2], row[3]))
+        return customerprofiles
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, kundeprofil_list: List['KundeProfil']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, customerprofile_list: List['CustomerProfile']) -> None:
         query = """
-        INSERT INTO KundeProfil (navn, adresse, telefon) VALUES (?, ?, ?)
+        INSERT INTO CustomerProfile (name, adress, telephone_num) VALUES (?, ?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(adresse) DO NOTHING
+        ON CONFLICT(adress) DO NOTHING
         """
-        values = [(kundeprofil.navn, kundeprofil.adresse, kundeprofil.telefon) for kundeprofil in kundeprofil_list]
+        values = [(customerprofile.name, customerprofile.adress, customerprofile.telephone_num) for customerprofile in customerprofile_list]
         cursor.executemany(query, values)
 
-class BillettKjøp():
-    def __init__(self, id: int, time: str, dato: datetime.date, kundeProfile: KundeProfil):
+class TicketPurchase():
+    def __init__(self, id: int, time: str, date: datetime.date, customer: CustomerProfile):
         self.id = id
         self.time = time
-        self.dato = dato
-        self.kundeProfile = kundeProfile
+        self.date = date
+        self.customer = customer
 
     def __str__(self):
-        return f"BillettKjøp(id={self.id}, time={self.time}, dato={self.dato}, kundeProfile={self.kundeProfile})"
+        return f"TicketPurchase(id={self.id}, time={self.time}, date={self.date}, customer={self.customer})"
     
     def insert(self, cursor: sqlite3.Cursor):
-        query = "INSERT INTO BillettKjøp (id, tid, dato, kunde) VALUES (?, ?, ?, ?)"
-        cursor.execute(query, (self.id, self.time, self.dato, self.kundeProfile.id))
+        query = "INSERT INTO TicketPurchase (id, time, date, customer) VALUES (?, ?, ?, ?)"
+        cursor.execute(query, (self.id, self.time, self.date, self.customer.id))
     
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE BillettKjøp SET tid = ?, dato = ?, kunde = ? WHERE id = ?"
-        cursor.execute(query, (self.time, self.dato, self.kundeProfile.id, self.id))
+        query = "UPDATE TicketPurchase SET time = ?, date = ?, customer = ? WHERE id = ?"
+        cursor.execute(query, (self.time, self.date, self.customer.id, self.id))
 
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM BillettKjøp WHERE id = ?"
+            query = "DELETE FROM TicketPurchase WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting BillettKjøp: {e}")
+            print(f"Error deleting TicketPurchase: {e}")
             return False
         
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['BillettKjøp']:
-        query = "SELECT * FROM BillettKjøp WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['TicketPurchase']:
+        query = "SELECT * FROM TicketPurchase WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return BillettKjøp(row[0], row[1], row[2], KundeProfil.get_by_id(cursor, row[3]))
+            return TicketPurchase(row[0], row[1], row[2], CustomerProfile.get_by_id(cursor, row[3]))
         return None
 
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['BillettKjøp']:
-        query = "SELECT * FROM BillettKjøp"
+    def get_all(cursor: sqlite3.Cursor) -> List['TicketPurchase']:
+        query = "SELECT * FROM TicketPurchase"
         cursor.execute(query)
         rows = cursor.fetchall()
-        billettkjøp = []
+        ticket_purchase = []
         for row in rows:
-            billettkjøp.append(BillettKjøp(row[0], row[1], row[2], KundeProfil.get_by_id(cursor, row[3])))
-        return billettkjøp
+            ticket_purchase.append(TicketPurchase(row[0], row[1], row[2], CustomerProfile.get_by_id(cursor, row[3])))
+        return ticket_purchase
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, billettkjøp_list: List['BillettKjøp']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, ticketpurchase_list: List['TicketPurchase']) -> None:
         query = """
-        INSERT INTO BillettKjøp (tid, dato, kunde) VALUES (?, ?, ?)
+        INSERT INTO TicketPurchase (time, date, customer) VALUES (?, ?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(tid, dato, kunde) DO NOTHING
+        ON CONFLICT(time, date, customer) DO NOTHING
         """
-        values = [(billettkjøp.time, billettkjøp.dato, billettkjøp.kundeProfile.id) for billettkjøp in billettkjøp_list]
+        values = [(ticket_purchase.time, ticket_purchase.date, ticket_purchase.customer.id) for ticket_purchase in ticketpurchase_list]
         cursor.executemany(query, values)
 
-class Billett():
-    def __init__(self, id: int, visning: Visning, stol: Stol, billettPris: BillettPris, billettKjøp: BillettKjøp):
+class Ticket():
+    def __init__(self, id: int, screening: Screening, chair: Chair, ticketpirce: TicketPrice, ticketPurchase: TicketPurchase):
         self.id = id
-        self.visning = visning
-        self.stol = stol
-        self.billettPris = billettPris
-        self.billettKjøp = billettKjøp
+        self.screening = screening
+        self.chair = chair
+        self.ticketpirce = ticketpirce
+        self.ticketPurchase = ticketPurchase
 
     def __str__(self):
-        return f"Billett(id={self.id}, visning={self.visning}, stol={self.stol}, billettPris={self.billettPris}, billettKjøp={self.billettKjøp})"
+        return f"Ticket(id={self.id}, screening={self.screening}, chair={self.chair}, ticketpirce={self.ticketpirce}, ticketPurchase={self.ticketPurchase})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO Billett (id, visning, stol, pris, kjøp) VALUES (?, ?, ?, ?, ?)
+        INSERT INTO Ticket (id, screening, chair, price, purchase) VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        cursor.execute(query, (self.id, self.visning.id, self.stol.id, self.billettPris.id, self.billettKjøp.id))
+        cursor.execute(query, (self.id, self.screening.id, self.chair.id, self.ticketpirce.id, self.ticketPurchase.id))
 
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM Billett WHERE id = ?"
+            query = "DELETE FROM Ticket WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting Billett: {e}")
+            print(f"Error deleting Ticket: {e}")
             return False
         
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE Billett SET visning = ?, stol = ?, billettPris = ?, billettKjøp = ? WHERE id = ?"
-        cursor.execute(query, (self.visning.id, self.stol.id, self.billettPris.id, self.billettKjøp.id, self.id))
+        query = "UPDATE Ticket SET screening = ?, chair = ?, ticketpirce = ?, ticketPurchase = ? WHERE id = ?"
+        cursor.execute(query, (self.screening.id, self.chair.id, self.ticketpirce.id, self.ticketPurchase.id, self.id))
 
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Billett']:
-        query = "SELECT * FROM Billett WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Ticket']:
+        query = "SELECT * FROM Ticket WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return Billett(row[0], Visning.get_by_id(cursor, row[1]), Stol.get_by_id(cursor, row[2]), BillettPris.get_by_id(cursor, row[3]), BillettKjøp.get_by_id(cursor, row[4]))
+            return Ticket(row[0], Screening.get_by_id(cursor, row[1]), Chair.get_by_id(cursor, row[2]), TicketPrice.get_by_id(cursor, row[3]), TicketPurchase.get_by_id(cursor, row[4]))
         return None
     
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['Billett']:
-        query = "SELECT * FROM Billett"
+    def get_all(cursor: sqlite3.Cursor) -> List['Ticket']:
+        query = "SELECT * FROM Ticket"
         cursor.execute(query)
         rows = cursor.fetchall()
-        billetter = []
+        tickets = []
         for row in rows:
-            billetter.append(Billett(row[0], Visning.get_by_id(cursor, row[1]), Stol.get_by_id(cursor, row[2]), BillettPris.get_by_id(cursor, row[3]), BillettKjøp.get_by_id(cursor, row[4])))
-        return billetter
+            tickets.append(Ticket(row[0], Screening.get_by_id(cursor, row[1]), Chair.get_by_id(cursor, row[2]), TicketPrice.get_by_id(cursor, row[3]), TicketPurchase.get_by_id(cursor, row[4])))
+        return tickets
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, billett_list: List['Billett']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, purchase_list: List['Ticket']) -> None:
         query = """
-        INSERT INTO Billett (visning, stol, pris, kjøp) VALUES (?, ?, ?, ?)
+        INSERT INTO Ticket (screening, chair, price, purchase) VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(visning, stol, pris, kjøp) DO NOTHING
+        ON CONFLICT(screening, chair, price, purchase) DO NOTHING
         """
-        values = [(billett.visning.id, billett.stol.id, billett.billettPris.id, billett.billettKjøp.id) for billett in billett_list]
+        values = [(ticket.screening.id, ticket.chair.id, ticket.ticketpirce.id, ticket.ticketPurchase.id) for ticket in purchase_list]
         cursor.executemany(query, values)    
 
-class Akt():
-    def __init__(self, id: int, nummer: int, teaterstykket: Teaterstykket, navn: str = None):
+class Act():
+    def __init__(self, id: int, number: int, play: Play, name: str = None):
         self.id = id
-        self.nummer = nummer
-        self.navn = navn
-        self.teaterstykket = teaterstykket
+        self.number = number
+        self.name = name
+        self.play = play
 
     def __str__(self):
-        return f"Akt(id={self.id}, nummer={self.nummer}, navn={self.navn})"
+        return f"Act(id={self.id}, number={self.number}, name={self.name})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO Akt (id, nummer, navn, teaterstykket) VALUES (?, ?, ?, ?)
+        INSERT INTO Act (id, number, name, play) VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        cursor.execute(query, (self.id, self.nummer, self.navn, self.teaterstykket.id))
+        cursor.execute(query, (self.id, self.number, self.name, self.play.id))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM Akt WHERE id = ?"
+            query = "DELETE FROM Act WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting Akt: {e}")
+            print(f"Error deleting Act: {e}")
             return False
         
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE Akt SET nummer = ?, navn = ?, teaterstykket = ? WHERE id = ?"
-        cursor.execute(query, (self.nummer, self.navn, self.teaterstykket.id, self.id))
+        query = "UPDATE Act SET number = ?, name = ?, play = ? WHERE id = ?"
+        cursor.execute(query, (self.number, self.name, self.play.id, self.id))
 
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Akt']:
-        query = "SELECT * FROM Akt WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Act']:
+        query = "SELECT * FROM Act WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return Akt(row[0], row[1], row[2], Teaterstykket.get_by_id(cursor, row[3]))
+            return Act(row[0], row[1], row[2], Play.get_by_id(cursor, row[3]))
         return None
     
     @staticmethod
-    def get_by_nummer_and_teaterstykket(cursor: sqlite3.Cursor, nummer: int, teaterstykket: Teaterstykket) -> Optional['Akt']:
-        query = "SELECT * FROM Akt WHERE nummer = ? AND teaterstykket = ?"
-        cursor.execute(query, (nummer, teaterstykket.id))
+    def get_by_number_and_play(cursor: sqlite3.Cursor, number: int, play: Play) -> Optional['Act']:
+        query = "SELECT * FROM Act WHERE number = ? AND play = ?"
+        cursor.execute(query, (number, play.id))
         row = cursor.fetchone()
         if row:
-            return Akt(row[0], row[1], row[2], teaterstykket)
+            return Act(row[0], row[1], row[2], play)
         return None
 
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['Akt']:
-        query = "SELECT * FROM Akt"
+    def get_all(cursor: sqlite3.Cursor) -> List['Act']:
+        query = "SELECT * FROM Act"
         cursor.execute(query)
         rows = cursor.fetchall()
         aktene = []
         for row in rows:
-            aktene.append(Akt(row[0], row[1], row[2], Teaterstykket.get_by_id(cursor, row[3])))
+            aktene.append(Act(row[0], row[1], row[2], Play.get_by_id(cursor, row[3])))
         return aktene
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, akt_list: List['Akt']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, akt_list: List['Act']) -> None:
         query = """
-        INSERT INTO Akt (nummer, navn, teaterstykket) VALUES (?, ?, ?)
+        INSERT INTO Act (number, name, play) VALUES (?, ?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(nummer, teaterstykket) DO NOTHING
+        ON CONFLICT(number, play) DO NOTHING
         """
-        values = [(akt.nummer, akt.navn, akt.teaterstykket.id) for akt in akt_list]
+        values = [(act.number, act.name, act.play.id) for act in akt_list]
         cursor.executemany(query, values)
         
 
-class Skuespiller():
-    id: int
-    navn: str
-
-    def __init__(self, id: int, navn: str):
+class Actor():
+    def __init__(self, id: int, name: str):
         self.id = id
-        self.navn = navn
+        self.name = name
     
     def __str__(self):
-        return f"Skuespiller(id={self.id}, navn={self.navn})"
+        return f"Actor(id={self.id}, name={self.name})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO Skuespiller (id, navn) VALUES (?, ?)
+        INSERT INTO Actor (id, name) VALUES (?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        cursor.execute(query, (self.id, self.navn))
+        cursor.execute(query, (self.id, self.name))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM Skuespiller WHERE id = ?"
+            query = "DELETE FROM Actor WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting Skuespiller: {e}")
+            print(f"Error deleting Actor: {e}")
             return False
         
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE Skuespiller SET navn = ? WHERE id = ?"
-        cursor.execute(query, (self.navn, self.id))
+        query = "UPDATE Actor SET name = ? WHERE id = ?"
+        cursor.execute(query, (self.name, self.id))
 
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Skuespiller']:
-        query = "SELECT * FROM Skuespiller WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Actor']:
+        query = "SELECT * FROM Actor WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return Skuespiller(row[0], row[1])
+            return Actor(row[0], row[1])
         return None
     
     @staticmethod
-    def get_by_name(cursor: sqlite3.Cursor, navn: str) -> Optional['Skuespiller']:
-        query = "SELECT * FROM Skuespiller WHERE navn = ?"
-        cursor.execute(query, (navn,))
+    def get_by_name(cursor: sqlite3.Cursor, name: str) -> Optional['Actor']:
+        query = "SELECT * FROM Actor WHERE name = ?"
+        cursor.execute(query, (name,))
         row = cursor.fetchone()
         if row:
-            return Skuespiller(row[0], row[1])
+            return Actor(row[0], row[1])
         return None
     
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['Skuespiller']:
-        query = "SELECT * FROM Skuespiller"
+    def get_all(cursor: sqlite3.Cursor) -> List['Actor']:
+        query = "SELECT * FROM Actor"
         cursor.execute(query)
         rows = cursor.fetchall()
-        skuespillere = []
+        actors = []
         for row in rows:
-            skuespillere.append(Skuespiller(row[0], row[1]))
-        return skuespillere
+            actors.append(Actor(row[0], row[1]))
+        return actors
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, skuespiller_list: List['Skuespiller']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, actor_list: List['Actor']) -> None:
         query = """
-        INSERT INTO Skuespiller (navn) VALUES (?)
+        INSERT INTO Actor (name) VALUES (?)
         ON CONFLICT(id) DO NOTHING
         """
-        values = [(skuespiller.navn,) for skuespiller in skuespiller_list]
+        values = [(actor.name,) for actor in actor_list]
         cursor.executemany(query, values)
     
     @staticmethod
-    def get_all_by_play(cursor: sqlite3.Cursor, teaterstykketId: int):
+    def get_all_by_play(cursor: sqlite3.Cursor, play_id: int):
         query = """
-        SELECT * FROM Skuespiller WHERE id = (
-          SELECT (id) FROM SkuespillerRolleJunction WHERE rolle = (
-            SELECT (id) FROM RolleAkterJunction WHERE akt = (
-              SELECT (id) FROM Akt WHERE teaterstykket = ?
+        SELECT * FROM Actor WHERE id = (
+          SELECT (id) FROM ActorRoleJunction WHERE role = (
+            SELECT (id) FROM RoleActJunction WHERE act = (
+              SELECT (id) FROM Act WHERE play = ?
             )
           )
         )
         """
-        cursor.execute(query, (teaterstykketId,))
+        cursor.execute(query, (play_id,))
         rows = cursor.fetchall()
         actors = []
         if rows:
             for row in rows:
-                actors.append(Skuespiller(row[0], row[1]))
+                actors.append(Actor(row[0], row[1]))
             return actors
         return None
 
 
 
     
-class Roller():
-    id: int
-    navn: str
-
-    def __init__(self, id: int, navn: str):
+class Role():
+    def __init__(self, id: int, name: str):
         self.id = id
-        self.navn = navn
+        self.name = name
 
     def __str__(self):
-        return f"Roller(id={self.id}, navn={self.navn})"
+        return f"Role(id={self.id}, name={self.name})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO Roller (id, navn) VALUES (?, ?)
+        INSERT INTO Role (id, name) VALUES (?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        cursor.execute(query, (self.id, self.navn))
+        cursor.execute(query, (self.id, self.name))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM Roller WHERE id = ?"
+            query = "DELETE FROM Role WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting Roller: {e}")
+            print(f"Error deleting Role: {e}")
             return False
         
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE Roller SET navn = ? WHERE id = ?"
-        cursor.execute(query, (self.navn, self.id))
+        query = "UPDATE Role SET name = ? WHERE id = ?"
+        cursor.execute(query, (self.name, self.id))
 
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Roller']:
-        query = "SELECT * FROM Roller WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Role']:
+        query = "SELECT * FROM Role WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return Roller(row[0], row[1])
+            return Role(row[0], row[1])
         return None
     
     @staticmethod
-    def get_by_name(cursor: sqlite3.Cursor, navn: str) -> Optional['Roller']:
-        query = "SELECT * FROM Roller WHERE navn = ?"
-        cursor.execute(query, (navn,))
+    def get_by_name(cursor: sqlite3.Cursor, name: str) -> Optional['Role']:
+        query = "SELECT * FROM Role WHERE name = ?"
+        cursor.execute(query, (name,))
         row = cursor.fetchone()
         if row:
-            return Roller(row[0], row[1])
+            return Role(row[0], row[1])
         return None
 
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['Roller']:
-        query = "SELECT * FROM Roller"
+    def get_all(cursor: sqlite3.Cursor) -> List['Role']:
+        query = "SELECT * FROM Role"
         cursor.execute(query)
         rows = cursor.fetchall()
-        roller = []
+        roles = []
         for row in rows:
-            roller.append(Roller(row[0], row[1]))
-        return roller
+            roles.append(Role(row[0], row[1]))
+        return roles
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, roller_list: List['Roller']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, role_list: List['Role']) -> None:
         query = """
-        INSERT INTO Roller (navn) VALUES (?)
+        INSERT INTO Role (name) VALUES (?)
         ON CONFLICT(id) DO NOTHING
         """
-        values = [(roller.navn,) for roller in roller_list]
+        values = [(roles.name,) for roles in role_list]
         cursor.executemany(query, values)
     
 
-class RolleAkterJunction():
-    def __init__(self, akt: Akt, rolle: Roller):
-        self.akt = akt
-        self.rolle = rolle
+class RoleActJunction():
+    def __init__(self, act: Act, role: Role):
+        self.act = act
+        self.role = role
 
     def __str__(self):
-        return f"RolleAkterJunction(akt={self.akt}, rolle={self.rolle})"
+        return f"RoleActJunction(act={self.act}, role={self.role})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO RolleAkterJunction (akt, rolle) VALUES (?, ?)
-        ON CONFLICT(akt, rolle) DO NOTHING  
+        INSERT INTO RoleActJunction (act, role) VALUES (?, ?)
+        ON CONFLICT(act, role) DO NOTHING  
         """
-        cursor.execute(query, (self.akt.id, self.rolle.id))
+        cursor.execute(query, (self.act.id, self.role.id))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM RolleAkterJunction WHERE akt = ? AND rolle = ?"
-            cursor.execute(query, (self.akt.id, self.rolle.id))
+            query = "DELETE FROM RoleActJunction WHERE act = ? AND role = ?"
+            cursor.execute(query, (self.act.id, self.role.id))
             return True
         except Exception as e:
-            print(f"Error deleting RolleAkterJunction: {e}")
+            print(f"Error deleting RoleActJunction: {e}")
             return False
         
     @staticmethod
-    def get_by_akt(cursor: sqlite3.Cursor, akt: Akt) -> List['RolleAkterJunction']:
-        query = "SELECT * FROM RolleAkterJunction WHERE akt = ?"
-        cursor.execute(query, (akt.id,))
+    def get_by_act(cursor: sqlite3.Cursor, act: Act) -> List['RoleActJunction']:
+        query = "SELECT * FROM RoleActJunction WHERE act = ?"
+        cursor.execute(query, (act.id,))
         rows = cursor.fetchall()
         junctions = []
         for row in rows:
-            junctions.append(RolleAkterJunction(akt, Roller.get_by_id(cursor, row[1])))
+            junctions.append(RoleActJunction(act, Role.get_by_id(cursor, row[1])))
         return junctions
     
     @staticmethod
-    def get_by_rolle(cursor: sqlite3.Cursor, rolle: Roller) -> List['RolleAkterJunction']:
-        query = "SELECT * FROM RolleAkterJunction WHERE rolle = ?"
-        cursor.execute(query, (rolle.id,))
+    def get_by_role(cursor: sqlite3.Cursor, role: Role) -> List['RoleActJunction']:
+        query = "SELECT * FROM RoleActJunction WHERE role = ?"
+        cursor.execute(query, (role.id,))
         rows = cursor.fetchall()
         junctions = []
         for row in rows:
-            junctions.append(RolleAkterJunction(Akt.get_by_id(cursor, row[0]), rolle))
+            junctions.append(RoleActJunction(Act.get_by_id(cursor, row[0]), role))
         return junctions
     
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['RolleAkterJunction']:
-        query = "SELECT * FROM RolleAktJunction"
+    def get_all(cursor: sqlite3.Cursor) -> List['RoleActJunction']:
+        query = "SELECT * FROM RoleActJunction"
         cursor.execute(query)
         rows = cursor.fetchall()
         junctions = []
         for row in rows:
-            junctions.append(RolleAkterJunction(Akt.get_by_id(cursor, row[0]), Roller.get_by_id(cursor, row[1])))
+            junctions.append(RoleActJunction(Act.get_by_id(cursor, row[0]), Role.get_by_id(cursor, row[1])))
         return junctions
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, junction_list: List['RolleAkterJunction']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, junction_list: List['RoleActJunction']) -> None:
         query = """
-        INSERT INTO RolleAkterJunction (akt, rolle) VALUES (?, ?)
-        ON CONFLICT(akt, rolle) DO NOTHING
+        INSERT INTO RoleActJunction (act, role) VALUES (?, ?)
+        ON CONFLICT(act, role) DO NOTHING
         """
-        values = [(junction.akt.id, junction.rolle.id) for junction in junction_list]
+        values = [(junction.act.id, junction.role.id) for junction in junction_list]
         cursor.executemany(query, values)
         
     
 
-class SkuespillerRolleJunction():
-    def __init__(self, skuespiller: Skuespiller, rolle: Roller):
-        self.skuespiller = skuespiller
-        self.rolle = rolle
+class ActorRoleJunction():
+    def __init__(self, actor: Actor, role: Role):
+        self.actor = actor
+        self.role = role
 
     def __str__(self):
-        return f"SkuespillerRolleJunction(skuespiller={self.skuespiller}, rolle={self.rolle})"
+        return f"ActorRoleJunction(actor={self.actor}, role={self.role})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO SkuespillerRolleJunction (skuespiller, rolle) VALUES (?, ?)
-        ON CONFLICT(skuespiller, rolle) DO NOTHING
+        INSERT INTO ActorRoleJunction (actor, role) VALUES (?, ?)
+        ON CONFLICT(actor, role) DO NOTHING
         """
-        cursor.execute(query, (self.skuespiller.id, self.rolle.id))
+        cursor.execute(query, (self.actor.id, self.role.id))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM SkuespillerRolleJunction WHERE skuespiller = ? AND rolle = ?"
-            cursor.execute(query, (self.skuespiller.id, self.rolle.id))
+            query = "DELETE FROM ActorRoleJunction WHERE actor = ? AND role = ?"
+            cursor.execute(query, (self.actor.id, self.role.id))
             return True
         except Exception as e:
-            print(f"Error deleting SkuespillerRolleJunction: {e}")
+            print(f"Error deleting ActorRoleJunction: {e}")
             return False
         
     @staticmethod
-    def get_by_skuespiller(cursor: sqlite3.Cursor, skuespiller: Skuespiller) -> List['SkuespillerRolleJunction']:
-        query = "SELECT * FROM SkuespillerRolleJunction WHERE skuespiller = ?"
-        cursor.execute(query, (skuespiller.id,))
+    def get_by_actor(cursor: sqlite3.Cursor, actor: Actor) -> List['ActorRoleJunction']:
+        query = "SELECT * FROM ActorRoleJunction WHERE actor = ?"
+        cursor.execute(query, (actor.id,))
         rows = cursor.fetchall()
         junctions = []
         for row in rows:
-            junctions.append(SkuespillerRolleJunction(skuespiller, Roller.get_by_id(cursor, row[1])))
+            junctions.append(ActorRoleJunction(actor, Role.get_by_id(cursor, row[1])))
         return junctions
     
     @staticmethod
-    def get_by_rolle(cursor: sqlite3.Cursor, rolle: Roller) -> List['SkuespillerRolleJunction']:
-        query = "SELECT * FROM SkuespillerRolleJunction WHERE rolle = ?"
-        cursor.execute(query, (rolle.id,))
+    def get_by_role(cursor: sqlite3.Cursor, role: Role) -> List['ActorRoleJunction']:
+        query = "SELECT * FROM ActorRoleJunction WHERE role = ?"
+        cursor.execute(query, (role.id,))
         rows = cursor.fetchall()
         junctions = []
         for row in rows:
-            junctions.append(SkuespillerRolleJunction(Skuespiller.get_by_id(cursor, row[0]), rolle))
+            junctions.append(ActorRoleJunction(Actor.get_by_id(cursor, row[0]), role))
         return junctions
     
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['SkuespillerRolleJunction']:
-        query = "SELECT * FROM SkuespillerRolleJunction"
+    def get_all(cursor: sqlite3.Cursor) -> List['ActorRoleJunction']:
+        query = "SELECT * FROM ActorRoleJunction"
         cursor.execute(query)
         rows = cursor.fetchall()
         junctions = []
         for row in rows:
-            junctions.append(SkuespillerRolleJunction(Skuespiller.get_by_id(cursor, row[0]), Roller.get_by_id(cursor, row[1])))
+            junctions.append(ActorRoleJunction(Actor.get_by_id(cursor, row[0]), Role.get_by_id(cursor, row[1])))
         return junctions
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, junction_list: List['SkuespillerRolleJunction']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, junction_list: List['ActorRoleJunction']) -> None:
         query = """
-        INSERT INTO SkuespillerRolleJunction (skuespiller, rolle) VALUES (?, ?)
-        ON CONFLICT(skuespiller, rolle) DO NOTHING
+        INSERT INTO ActorRoleJunction (actor, role) VALUES (?, ?)
+        ON CONFLICT(actor, role) DO NOTHING
         """
-        values = [(junction.skuespiller.id, junction.rolle.id) for junction in junction_list]
+        values = [(junction.actor.id, junction.role.id) for junction in junction_list]
         cursor.executemany(query, values)
 
-class Oppgave():
-    def __init__(self, id: int, navn: str, teaterstykket: Teaterstykket):
+class Task():
+    def __init__(self, id: int, name: str, play: Play):
         self.id = id
-        self.navn = navn
-        self.teaterstykket = teaterstykket
+        self.name = name
+        self.play = play
 
     def __str__(self):
-        return f"Oppgave(id={self.id}, navn={self.navn}, teaterstykket={self.teaterstykket})"
+        return f"Task(id={self.id}, name={self.name}, play={self.play})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO Oppgave (id, navn, teaterstykket) VALUES (?, ?, ?)
+        INSERT INTO Task (id, name, play) VALUES (?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        cursor.execute(query, (self.id, self.navn, self.teaterstykket.id))
+        cursor.execute(query, (self.id, self.name, self.play.id))
 
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM Oppgave WHERE id = ?"
+            query = "DELETE FROM Task WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting Oppgave: {e}")
+            print(f"Error deleting Task: {e}")
             return False
         
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE Oppgave SET navn = ?, teaterstykket = ? WHERE id = ?"
-        cursor.execute(query, (self.navn, self.teaterstykket.id, self.id))
+        query = "UPDATE Task SET name = ?, play = ? WHERE id = ?"
+        cursor.execute(query, (self.name, self.play.id, self.id))
 
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Oppgave']:
-        query = "SELECT * FROM Oppgave WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Task']:
+        query = "SELECT * FROM Task WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            return Oppgave(row[0], row[1], row[2], Teaterstykket.get_by_id(cursor, row[3]))
+            return Task(row[0], row[1], row[2], Play.get_by_id(cursor, row[3]))
         return None
     
     @staticmethod
-    def get_by_name_and_teaterstykket(cursor: sqlite3.Cursor, navn: str, teaterstykket: Teaterstykket) -> Optional['Oppgave']:
-        query = "SELECT * FROM Oppgave WHERE navn = ? AND teaterstykket = ?"
-        cursor.execute(query, (navn, teaterstykket.id))
+    def get_by_name_and_play(cursor: sqlite3.Cursor, name: str, play: Play) -> Optional['Task']:
+        query = "SELECT * FROM Task WHERE name = ? AND play = ?"
+        cursor.execute(query, (name, play.id))
         row = cursor.fetchone()
         if row:
-            return Oppgave(row[0], row[1], teaterstykket)
+            return Task(row[0], row[1], play)
         return None
     
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['Oppgave']:
-        query = "SELECT * FROM Oppgave"
+    def get_all(cursor: sqlite3.Cursor) -> List['Task']:
+        query = "SELECT * FROM Task"
         cursor.execute(query)
         rows = cursor.fetchall()
-        oppgaver = []
+        tasks = []
         for row in rows:
-            oppgaver.append(Oppgave(row[0], row[1], row[2], Teaterstykket.get_by_id(cursor, row[3])))
-        return oppgaver
+            tasks.append(Task(row[0], row[1], row[2], Play.get_by_id(cursor, row[3])))
+        return tasks
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, oppgave_list: List['Oppgave']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, task_list: List['Task']) -> None:
         query = """
-        INSERT INTO Oppgave (navn, teaterstykket) VALUES (?, ?)
+        INSERT INTO Task (name, play) VALUES (?, ?)
         ON CONFLICT(id) DO NOTHING
-        ON CONFLICT(navn, teaterstykket) DO NOTHING
+        ON CONFLICT(name, play) DO NOTHING
         """
-        values = [(oppgave.navn, oppgave.teaterstykket.id) for oppgave in oppgave_list]
+        values = [(task.name, task.play.id) for task in task_list]
         cursor.executemany(query, values)
 
 
-class AnsattStatus():
+class EmployeeStatus():
     def __init__(self, status: str):
         self.status = status
 
     def __str__(self):
-        return f"AnsattStatus(status={self.status})"
+        return f"EmployeeStatus(status={self.status})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO AnsattStatus (ansatt_status) VALUES (?)
+        INSERT INTO EmployeeStatus (employee_status) VALUES (?)
         ON CONFLICT(status) DO NOTHING
         """
         cursor.execute(query, (self.status,))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM AnsattStatus WHERE ansatt_status = ?"
+            query = "DELETE FROM EmployeeStatus WHERE employee_status = ?"
             cursor.execute(query, (self.status,))
             return True
         except Exception as e:
-            print(f"Error deleting AnsattStatus: {e}")
+            print(f"Error deleting EmployeeStatus: {e}")
             return False
 
     @staticmethod
-    def get_by_status(cursor: sqlite3.Cursor, status: str) -> Optional['AnsattStatus']:
-        query = "SELECT * FROM AnsattStatus WHERE ansatt_status = ?"
+    def get_by_status(cursor: sqlite3.Cursor, status: str) -> Optional['EmployeeStatus']:
+        query = "SELECT * FROM EmployeeStatus WHERE employee_status = ?"
         cursor.execute(query, (status,))
         row = cursor.fetchone()
         if row:
-            return AnsattStatus(row[0])
+            return EmployeeStatus(row[0])
         return None
     
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['AnsattStatus']:
-        query = "SELECT * FROM AnsattStatus"
+    def get_all(cursor: sqlite3.Cursor) -> List['EmployeeStatus']:
+        query = "SELECT * FROM EmployeeStatus"
         cursor.execute(query)
         rows = cursor.fetchall()
         statusene = []
         for row in rows:
-            statusene.append(AnsattStatus(row[0]))
+            statusene.append(EmployeeStatus(row[0]))
         return statusene
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, status_list: List['AnsattStatus']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, status_list: List['EmployeeStatus']) -> None:
         query = """
-        INSERT INTO AnsattStatus (ansatt_status) VALUES (?)
-        ON CONFLICT(ansatt_status) DO NOTHING
+        INSERT INTO EmployeeStatus (employee_status) VALUES (?)
+        ON CONFLICT(employee_status) DO NOTHING
         """
         values = [(status.status,) for status in status_list]
         cursor.executemany(query, values)
 
-class StillingsTittel():
-    def __init__(self, tittel: str):
-        self.tittel = tittel
-
-    def __str__(self):
-        return f"StillingsTittel(tittel={self.tittel})"
-    
-    def insert(self, cursor: sqlite3.Cursor) -> None:
-        query = """
-        INSERT INTO StillingsTittel (tittel) VALUES (?)
-        ON CONFLICT(tittel) DO NOTHING
-        """
-        cursor.execute(query, (self.tittel,))
-    
-    def delete(self, cursor: sqlite3.Cursor) -> bool:
-        try:
-            query = "DELETE FROM StillingsTittel WHERE tittel = ?"
-            cursor.execute(query, (self.tittel,))
-            return True
-        except Exception as e:
-            print(f"Error deleting StillingsTittel: {e}")
-            return False
-        
-    @staticmethod
-    def get_by_tittel(cursor: sqlite3.Cursor, tittel: str) -> Optional['StillingsTittel']:
-        query = "SELECT * FROM StillingsTittel WHERE tittel = ?"
-        cursor.execute(query, (tittel,))
-        row = cursor.fetchone()
-        if row:
-            return StillingsTittel(row[0])
-        return None
-    
-    @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['StillingsTittel']:
-        query = "SELECT * FROM StillingsTittel"
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        titlene = []
-        for row in rows:
-            titlene.append(StillingsTittel(row[0]))
-        return titlene
-
-    @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, tittel_list: List['StillingsTittel']) -> None:
-        query = """
-        INSERT INTO StillingsTittel (tittel) VALUES (?)
-        ON CONFLICT(tittel) DO NOTHING
-        """
-        values = [(tittel.tittel,) for tittel in tittel_list]
-        cursor.executemany(query, values)        
-
-class Medvirkende():
-    def __init__(self, id: int, navn: str, email: str, status: AnsattStatus):
+class Contributor():
+    def __init__(self, id: int, name: str, email: str, status: EmployeeStatus):
         self.id = id
-        self.navn = navn
+        self.name = name
         self.email = email
         self.status = status
 
     def __str__(self):
-        return f"Medvirkende(id={self.id}, navn={self.navn}, email={self.email}, status={self.status})"
+        return f"Contributor(id={self.id}, name={self.name}, email={self.email}, status={self.status})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO Medvirkende (id, navn, email, ansatt_status) VALUES (?, ?, ?, ?)
+        INSERT INTO Contributor (id, name, email, employee_status) VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        cursor.execute(query, (self.id, self.navn, self.email, self.status.status))
+        cursor.execute(query, (self.id, self.name, self.email, self.status.status))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM Medvirkende WHERE id = ?"
+            query = "DELETE FROM Contributor WHERE id = ?"
             cursor.execute(query, (self.id,))
             return True
         except Exception as e:
-            print(f"Error deleting Medvirkende: {e}")
+            print(f"Error deleting Contributor: {e}")
             return False
         
     def update(self, cursor: sqlite3.Cursor) -> None:
-        query = "UPDATE Medvirkende SET navn = ?, email = ?, ansatt_status = ?, stilling = ? WHERE id = ?"
-        cursor.execute(query, (self.navn, self.email, self.status.status, self.id))
+        query = "UPDATE Contributor SET name = ?, email = ?, employee_status = ? WHERE id = ?"
+        cursor.execute(query, (self.name, self.email, self.status.status, self.id))
 
     @staticmethod
-    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Medvirkende']:
-        query = "SELECT * FROM Medvirkende WHERE id = ?"
+    def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['Contributor']:
+        query = "SELECT * FROM Contributor WHERE id = ?"
         cursor.execute(query, (id,))
         row = cursor.fetchone()
         if row:
-            status = AnsattStatus(row[3])
-            return Medvirkende(row[0], row[1], row[2], status)
+            status = EmployeeStatus(row[3])
+            print("heelo")
+            return Contributor(row[0], row[1], row[2], status)
         return None
     
     @staticmethod
-    def get_by_name(cursor: sqlite3.Cursor, navn: str) -> Optional['Medvirkende']:
-        query = "SELECT * FROM Medvirkende WHERE navn = ?"
-        cursor.execute(query, (navn,))
+    def get_by_name(cursor: sqlite3.Cursor, name: str) -> Optional['Contributor']:
+        query = "SELECT * FROM Contributor WHERE name = ?"
+        cursor.execute(query, (name,))
         row = cursor.fetchone()
         if row:
-            status = AnsattStatus(row[3])
-            return Medvirkende(row[0], row[1], row[2], status)
+            status = EmployeeStatus(row[3])
+            return Contributor(row[0], row[1], row[2], status)
         return None
     
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['Medvirkende']:
-        query = "SELECT * FROM Medvirkende"
+    def get_all(cursor: sqlite3.Cursor) -> List['Contributor']:
+        query = "SELECT * FROM Contributor"
         cursor.execute(query)
         rows = cursor.fetchall()
-        medvirkende = []
+        contributor = []
         for row in rows:
-            status = AnsattStatus(row[3])
-            medvirkende.append(Medvirkende(row[0], row[1], row[2], status))
-        return medvirkende
+            status = EmployeeStatus(row[3])
+            contributor.append(Contributor(row[0], row[1], row[2], status))
+        return contributor
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, medvirkende_list: List['Medvirkende']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, contributor_list: List['Contributor']) -> None:
         query = """
-        INSERT INTO Medvirkende (navn, email, ansatt_status, stilling) VALUES (?, ?, ?, ?)
+        INSERT INTO Contributor (name, email, employee_status) VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
         """
-        values = [(medvirkende.navn, medvirkende.email, medvirkende.status.status) for medvirkende in medvirkende_list]
+        values = [(contributor.name, contributor.email, contributor.status.status) for contributor in contributor_list]
         cursor.executemany(query, values)
 
 
-class OppgaveMedvirkendeJunctoin():
-    medvirkende: Medvirkende
-    oppgave: Oppgave
+class TaskContributorJunction():
+    contributor: Contributor
+    task: Task
 
-    def __init__(self, medvirkende: Medvirkende, oppgave: Oppgave):
-        self.medvirkende = medvirkende
-        self.oppgave = oppgave
+    def __init__(self, contributor: Contributor, task: Task):
+        self.contributor = contributor
+        self.task = task
 
     def __str__(self):
-        return f"MedvirkendeOppgaveJunction(medvirkende={self.medvirkende}, oppgave={self.oppgave})"
+        return f"TaskContributorJunction(contributor={self.contributor}, task={self.task})"
     
     def insert(self, cursor: sqlite3.Cursor) -> None:
         query = """
-        INSERT INTO OppgaveMedvirkendeJunctoin (medvirkende, oppgave) VALUES (?, ?)
-        ON CONFLICT(medvirkende, oppgave) DO NOTHING
+        INSERT INTO TaskContributorJunction (contributor, task) VALUES (?, ?)
+        ON CONFLICT(contributor, task) DO NOTHING
         """
-        cursor.execute(query, (self.medvirkende.id, self.oppgave.id))
+        cursor.execute(query, (self.contributor.id, self.task.id))
     
     def delete(self, cursor: sqlite3.Cursor) -> bool:
         try:
-            query = "DELETE FROM OppgaveMedvirkendeJunctoin WHERE medvirkende = ? AND oppgave = ?"
-            cursor.execute(query, (self.medvirkende.id, self.oppgave.id))
+            query = "DELETE FROM TaskContributorJunction WHERE contributor = ? AND task = ?"
+            cursor.execute(query, (self.contributor.id, self.task.id))
             return True
         except Exception as e:
-            print(f"Error deleting OppgaveMedvirkendeJunctoin: {e}")
+            print(f"Error deleting TaskContributorJunction: {e}")
             return False
         
     @staticmethod
-    def get_by_medvirkende(cursor: sqlite3.Cursor, medvirkende: Medvirkende) -> List['OppgaveMedvirkendeJunctoin']:
-        query = "SELECT * FROM OppgaveMedvirkendeJunctoin WHERE medvirkende = ?"
-        cursor.execute(query, (medvirkende.id,))
+    def get_by_contributor(cursor: sqlite3.Cursor, contributor: Contributor) -> List['TaskContributorJunction']:
+        query = "SELECT * FROM TaskContributorJunction WHERE contributor = ?"
+        cursor.execute(query, (contributor.id,))
         rows = cursor.fetchall()
         junctions = []
         for row in rows:
-            junctions.append(OppgaveMedvirkendeJunctoin(medvirkende, Oppgave.get_by_id(cursor, row[1])))
+            junctions.append(TaskContributorJunction(contributor, Task.get_by_id(cursor, row[1])))
         return junctions
     
     @staticmethod
-    def get_by_oppgave(cursor: sqlite3.Cursor, oppgave: Oppgave) -> List['OppgaveMedvirkendeJunctoin']:
-        query = "SELECT * FROM OppgaveMedvirkendeJunctoin WHERE oppgave = ?"
-        cursor.execute(query, (oppgave.id,))
+    def get_by_task(cursor: sqlite3.Cursor, task: Task) -> List['TaskContributorJunction']:
+        query = "SELECT * FROM TaskContributorJunction WHERE task = ?"
+        cursor.execute(query, (task.id,))
         rows = cursor.fetchall()
         junctions = []
         for row in rows:
-            junctions.append(OppgaveMedvirkendeJunctoin(Medvirkende.get_by_id(cursor, row[0]), oppgave))
+            junctions.append(TaskContributorJunction(Contributor.get_by_id(cursor, row[0]), task))
         return junctions
     
     @staticmethod
-    def get_all(cursor: sqlite3.Cursor) -> List['OppgaveMedvirkendeJunctoin']:
-        query = "SELECT * FROM OppgaveMedvirkendeJunctoin"
+    def get_all(cursor: sqlite3.Cursor) -> List['TaskContributorJunction']:
+        query = "SELECT * FROM TaskContributorJunction"
         cursor.execute(query)
         rows = cursor.fetchall()
         junctions = []
         for row in rows:
-            junctions.append(OppgaveMedvirkendeJunctoin(Medvirkende.get_by_id(cursor, row[0]), Oppgave.get_by_id(cursor, row[1])))
+            junctions.append(TaskContributorJunction(Contributor.get_by_id(cursor, row[0]), Task.get_by_id(cursor, row[1])))
         return junctions
     
     @staticmethod
-    def upsert_batch(cursor: sqlite3.Cursor, junction_list: List['OppgaveMedvirkendeJunctoin']) -> None:
+    def upsert_batch(cursor: sqlite3.Cursor, junction_list: List['TaskContributorJunction']) -> None:
         query = """
-        INSERT INTO OppgaveMedvirkendeJunctoin (medvirkende, oppgave) VALUES (?, ?)
-        ON CONFLICT(medvirkende, oppgave) DO NOTHING
+        INSERT INTO TaskContributorJunction (contributor, task) VALUES (?, ?)
+        ON CONFLICT(contributor, task) DO NOTHING
         """
-        values = [(junction.medvirkende.id, junction.oppgave.id) for junction in junction_list]
+        values = [(junction.contributor.id, junction.task.id) for junction in junction_list]
         cursor.executemany(query, values)

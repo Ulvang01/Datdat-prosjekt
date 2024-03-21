@@ -1,12 +1,11 @@
 import sqlite3
 import os
 
-from src.python.verifyTeaterstykker import verifyTeaterstykkene
+from src.python.verifyPlays import verifyPlays
 from src.python.verifyDB import verifyDB
 from src.python.verifyScenes import verifyScenes
-from src.python.verifyMedvirkende import verifyMedvirkendeAndStatus
-from src.python.verifyTickets import verifyTickets
-from src.python.models import Skuespiller, Teaterstykket, Visning
+from src.python.verifyContributors import verifyContributorsAndStatus
+from src.python.models import Actor, Play, Screening
 
 database = os.path.join("src", "sql", "database.db")
 
@@ -28,20 +27,19 @@ def main():
         if inp == 'verify':
             verifyDB(conn)
             verifyScenes(conn)
-            verifyTeaterstykkene(conn)
-            verifyMedvirkendeAndStatus(conn)
-            verifyTickets(conn)
+            verifyPlays(conn)
+            verifyContributorsAndStatus(conn)
             conn.commit()
         if inp.split(' ')[0] == 'getActorsByPlay': 
-            play = Teaterstykket.get_by_name(cursor, inp.split(' ')[1])
+            play = Play.get_by_name(cursor, inp.split(' ')[1])
             if not play:
                 print('Play does not exist.')
                 continue
-            actors = Skuespiller.get_all_by_play(cursor, play.id)
+            actors = Actor.get_all_by_play(cursor, play.id)
             for actor in actors: 
                 print(actor.__str__())
         if inp.split(' ')[0] == 'getBestsellingScreening':
-            best_play = Visning.get_bestselling(cursor)
+            best_play = Screening.get_bestselling(cursor)
             print("Best selling screening is: ", best_play[0].teaterstykket.navn, " at ", best_play[0].dato, ".")
             print("And it has sold: ", best_play[1], " tickets.")
 

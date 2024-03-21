@@ -76,7 +76,7 @@ CREATE TABLE Ticket (
     price INTEGER NOT NULL,
     FOREIGN KEY (screening) REFERENCES Screening(id),
     FOREIGN KEY (chair) REFERENCES Stol(id),
-    FOREIGN KEY (purchase) REFERENCES BilletKjøp(id),
+    FOREIGN KEY (purchase) REFERENCES TicketPurchase(id),
     FOREIGN KEY (price) REFERENCES TicketPrice(id),
     UNIQUE (screening, chair, purchase, price)
 );
@@ -91,7 +91,7 @@ CREATE TABLE Role (
     name VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE SkuespillerRolleJunction (
+CREATE TABLE ActorRoleJunction (
     actor INTEGER NOT NULL,
     role INTEGER NOT NULL,
     PRIMARY KEY (actor, role),
@@ -99,7 +99,7 @@ CREATE TABLE SkuespillerRolleJunction (
     FOREIGN KEY (role) REFERENCES Role(id)
 );
 
-CREATE TABLE Akt (
+CREATE TABLE Act (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     number INTEGER NOT NULL,
     name VARCHAR(255),
