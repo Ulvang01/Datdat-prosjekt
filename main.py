@@ -8,7 +8,7 @@ from src.python.verifyScenes import verifyScenes
 from src.python.verifyMedvirkende import verifyMedvirkendeAndStatus
 from src.python.verifyTickets import verifyTickets
 from src.python.models import Skuespiller, Teaterstykket, Visning
-from src.python.seatPurchase import getFreeSeats, makeCustomerProfile
+from src.python.seatPurchase import getFreeSeats, makeCustomerProfile, purchaseTickets
 
 database = os.path.join("src", "sql", "database.db")
 
@@ -27,9 +27,9 @@ def main():
             print(" - verify  --> Verify the database and populate it with some data.")
             print(" - getActorsByPlay <name of play>  --> Get all actors in a given play.")
             print(" - getBestsellingScreening  --> Get the best selling screening.")
-            print(" - makeCustomerProfile <name> <phone number> <address>  --> Make a new customer profile.")
-            print(" - getFreeSeats <name of play> <date>  --> Get the number of free seats in each row.")
-            print(" - purchaseSeats <name of play> <date> <row> <area> <amount>  --> Purchase an amount of seats on a row.")
+            print(" - makeCustomerProfile <name>, <phone number>, <address>  --> Make a new customer profile.")
+            print(" - getFreeSeats <name of play>, <date>  --> Get the number of free seats in each row.")
+            print(" - purchaseTickets <name of play>, <date>, <row>, <area>, <amount>, <customer name>, <ticket type>  --> Purchase an amount of tickets on a row.")
         if inp == 'verify':
             verifyDB(conn)
             verifyScenes(conn)
@@ -50,12 +50,28 @@ def main():
             print("Best selling screening is: ", best_play[0].teaterstykket.navn, " at ", best_play[0].dato, ".")
             print("And it has sold: ", best_play[1], " tickets.")
         if inp.split(' ')[0] == 'makeCustomerProfile':
-            makeCustomerProfile(inp.split(' ')[1:-2], inp.split(' ')[-2], inp.split(' ')[-1])
-        if inp.split(' ')[0] == 'getFreeSeats':
-            if not re.fullmatch("[0-9]{4}-[0-9]{2}-[0-9]{2}", inp.split(' ')[-1].strip()):
-                print('Invalid date format, dates must be in format yyyy-mm-dd. eks. 2024-03-20')
+            inp = inp[inp.find(' ')+1:]
+            argumentList = [element.strip() for element in inp.split(',')]
+            if len(argumentList) != 3:
+                print("Invalid number of arguments")
             else:
-                getFreeSeats(cursor, inp.split(' ')[1:-1], inp.split(' ')[-1].strip())
+                makeCustomerProfile(cursor, *argumentList)
+                conn.commit()
+        if inp.split(' ')[0] == 'getFreeSeats':
+            inp = inp[inp.find(' ')+1:]
+            argumentList = [element.strip() for element in inp.split(',')]
+            if len(argumentList) != 2:
+                print("Invalid number of arguments")
+            else:
+                getFreeSeats(cursor, *argumentList)
+        if inp.split(' ')[0] == 'purchaseTickets':
+            inp = inp[inp.find(' ')+1:]
+            argumentList = [element.strip() for element in inp.split(',')]
+            if len(argumentList) != 7:
+                print("Invalid number of arguments")
+            else:
+                purchaseTickets(cursor, *argumentList)
+                conn.commit()
 
     conn.close()
 if __name__ == "__main__":
