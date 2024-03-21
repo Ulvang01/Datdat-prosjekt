@@ -194,7 +194,6 @@ Description of the changes done with the database from DB delivery 1
 Assumptions made when creating functions and data for the database
 
 - If there is a discrepancy between the list of roles in the task description and the website, the roles from the website are used. Additionally, if there are roles on the website that are not mentioned in the task description, they are included only in the first act.
-- The responsible director of the theater is stored as a `<fine solution>`.
 - All participants are assumed to be full-time employees, as there is no information stating otherwise.
 - The database only contains tasks listed on the website, and these are standardized. For example, "Music release from the subjects" is changed to follow "Musical Responsibility."
 
