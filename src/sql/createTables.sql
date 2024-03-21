@@ -1,145 +1,145 @@
-CREATE TABLE Sal (
-    navn VARCHAR(255) PRIMARY KEY
+CREATE TABLE Scene (
+    name VARCHAR(255) PRIMARY KEY
 );
 
-CREATE TABLE Område (
+CREATE TABLE Area (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    navn VARCHAR(255) NOT NULL,
-    sal VARCHAR(255) NOT NULL,
-    FOREIGN KEY (sal) REFERENCES Sal(navn),
-    UNIQUE (navn, sal)
+    name VARCHAR(255) NOT NULL,
+    scene VARCHAR(255) NOT NULL,
+    FOREIGN KEY (scene) REFERENCES Scene(name),
+    UNIQUE (name, scene)
 );
 
-CREATE TABLE Rad (
+CREATE TABLE Row (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    radnr INTEGER NOT NULL,
-    område INTEGER NOT NULL,
-    FOREIGN KEY (område) REFERENCES Område(id),
-    UNIQUE (radnr, område)
+    row_num INTEGER NOT NULL,
+    area INTEGER NOT NULL,
+    FOREIGN KEY (area) REFERENCES Area(id),
+    UNIQUE (row_num, area)
 );
 
-CREATE TABLE Stol (
+CREATE TABLE Chair (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    stol_nr INTEGER NOT NULL,
-    rad INTEGER NOT NULL,
-    UNIQUE (stol_nr, rad),
-    FOREIGN KEY (rad) REFERENCES Rad(id)
+    chair_num INTEGER NOT NULL,
+    row INTEGER NOT NULL,
+    UNIQUE (chair_num, row),
+    FOREIGN KEY (row) REFERENCES Row(id)
 );
 
-CREATE TABLE Teaterstykket (
+CREATE TABLE Play (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    navn VARCHAR(255) NOT NULL,
-    forfatter VARCHAR(255) NOT NULL,
-    sal VARCHAR(255) NOT NULL,
-    tid TIME NOT NULL,
-    FOREIGN KEY (sal) REFERENCES Sal(navn),
-    UNIQUE (navn, forfatter)
+    name VARCHAR(255) NOT NULL,
+    author VARCHAR(255) NOT NULL,
+    scene VARCHAR(255) NOT NULL,
+    time TIME NOT NULL,
+    FOREIGN KEY (scene) REFERENCES Scene(name),
+    UNIQUE (name, author)
 );
 
-CREATE TABLE Visning (
+CREATE TABLE Screening (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    dato DATE NOT NULL,
-    teaterstykket INTEGER NOT NULL,
-    FOREIGN KEY (teaterstykket) REFERENCES Teaterstykket(id),
-    UNIQUE (dato, teaterstykket)
+    date DATE NOT NULL,
+    play INTEGER NOT NULL,
+    FOREIGN KEY (play) REFERENCES Play(id),
+    UNIQUE (date, play)
 );
 
-CREATE TABLE Kundeprofil (
+CREATE TABLE CustomerProfile (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    navn VARCHAR(255) NOT NULL,
-    telefon INTEGER NOT NULL UNIQUE,
-    adresse VARCHAR(255) NOT NULL UNIQUE
+    name VARCHAR(255) NOT NULL,
+    telephone_num INTEGER NOT NULL UNIQUE,
+    adress VARCHAR(255) NOT NULL UNIQUE
 );
 
-CREATE TABLE BillettKjøp (
+CREATE TABLE TicketPurchase (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    kunde INTEGER NOT NULL,
-    dato DATE NOT NULL,
-    tid TIME NOT NULL,
-    FOREIGN KEY (kunde) REFERENCES Kundeprofil(id)
+    customer INTEGER NOT NULL,
+    date DATE NOT NULL,
+    time TIME NOT NULL,
+    FOREIGN KEY (customer) REFERENCES CustomerProfile(id)
 );
 
-CREATE TABLE BillettPris (
+CREATE TABLE TicketPrice (
     id INTEGER PRIMARY KEY,
-    billett_type VARCHAR(255) NOT NULL,
-    teaterstykket INTEGER NOT NULL,
-    pris INTEGER NOT NULL,
-    FOREIGN KEY (teaterstykket) REFERENCES Teaterstykket(id),
-    UNIQUE (billett_type, teaterstykket)
+    ticket_type VARCHAR(255) NOT NULL,
+    play INTEGER NOT NULL,
+    price INTEGER NOT NULL,
+    FOREIGN KEY (play) REFERENCES Play(id),
+    UNIQUE (ticket_type, play)
 );
 
-CREATE TABLE Billett (
+CREATE TABLE Ticket (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    visning INTEGER NOT NULL,
-    stol INTEGER NOT NULL,
-    kjøp INTEGER NOT NULL,
-    pris INTEGER NOT NULL,
-    FOREIGN KEY (visning) REFERENCES Visning(id),
-    FOREIGN KEY (stol) REFERENCES Stol(id),
-    FOREIGN KEY (kjøp) REFERENCES BilletKjøp(id),
-    FOREIGN KEY (pris) REFERENCES BillettPris(id),
-    UNIQUE (visning, stol, kjøp, pris)
+    screening INTEGER NOT NULL,
+    chair INTEGER NOT NULL,
+    purchase INTEGER NOT NULL,
+    price INTEGER NOT NULL,
+    FOREIGN KEY (screening) REFERENCES Screening(id),
+    FOREIGN KEY (chair) REFERENCES Stol(id),
+    FOREIGN KEY (purchase) REFERENCES BilletKjøp(id),
+    FOREIGN KEY (price) REFERENCES TicketPrice(id),
+    UNIQUE (screening, chair, purchase, price)
 );
 
-CREATE TABLE Skuespiller (
+CREATE TABLE Actor (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    navn VARCHAR(255) NOT NULL
+    name VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE Roller (
+CREATE TABLE Role (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    navn VARCHAR(255) NOT NULL
+    name VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE SkuespillerRolleJunction (
-    skuespiller INTEGER NOT NULL,
-    rolle INTEGER NOT NULL,
-    PRIMARY KEY (skuespiller, rolle),
-    FOREIGN KEY (skuespiller) REFERENCES Skuespiller(id),
-    FOREIGN KEY (rolle) REFERENCES Roller(id)
+    actor INTEGER NOT NULL,
+    role INTEGER NOT NULL,
+    PRIMARY KEY (actor, role),
+    FOREIGN KEY (actor) REFERENCES Actor(id),
+    FOREIGN KEY (role) REFERENCES Role(id)
 );
 
 CREATE TABLE Akt (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nummer INTEGER NOT NULL,
-    navn VARCHAR(255),
-    teaterstykket INTEGER NOT NULL,
-    FOREIGN KEY (teaterstykket) REFERENCES Teaterstykket(id),
-    UNIQUE (nummer, teaterstykket)
+    number INTEGER NOT NULL,
+    name VARCHAR(255),
+    play INTEGER NOT NULL,
+    FOREIGN KEY (play) REFERENCES Play(id),
+    UNIQUE (number, play)
 );
 
-CREATE TABLE RolleAkterJunction (
-    rolle INTEGER NOT NULL,
-    akt INTEGER NOT NULL,
-    PRIMARY KEY (rolle, akt),
-    FOREIGN KEY (rolle) REFERENCES Roller(id),
-    FOREIGN KEY (akt) REFERENCES Akt(id)
+CREATE TABLE RoleActJunction (
+    role INTEGER NOT NULL,
+    act INTEGER NOT NULL,
+    PRIMARY KEY (role, act),
+    FOREIGN KEY (role) REFERENCES Role(id),
+    FOREIGN KEY (act) REFERENCES Akt(id)
 );
 
-CREATE TABLE Medvirkende (
+CREATE TABLE Contributor (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    navn VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
-    ansatt_status VARCHAR(255) NOT NULL,
-    FOREIGN KEY (ansatt_status) REFERENCES AnsattStatus(ansatt_status)
+    employee_status VARCHAR(255) NOT NULL,
+    FOREIGN KEY (employee_status) REFERENCES AnsattStatus(employee_status)
 );
 
-CREATE TABLE AnsattStatus (
-    ansatt_status VARCHAR(255) PRIMARY KEY
+CREATE TABLE EmployeeStatus (
+    employee_status VARCHAR(255) PRIMARY KEY
 );
 
 
-CREATE TABLE Oppgave (
+CREATE TABLE Task (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    navn VARCHAR(255) NOT NULL,
-    teaterstykket INTEGER NOT NULL,
-    FOREIGN KEY (teaterstykket) REFERENCES Teaterstykket(id)
+    name VARCHAR(255) NOT NULL,
+    play INTEGER NOT NULL,
+    FOREIGN KEY (play) REFERENCES Play(id)
 );
 
-CREATE TABLE OppgaveMedvirkendeJunctoin (
-    oppgave INTEGER NOT NULL,
-    medvirkende INTEGER NOT NULL,
-    PRIMARY KEY (oppgave, medvirkende),
-    FOREIGN KEY (oppgave) REFERENCES Oppgave(id),
-    FOREIGN KEY (medvirkende) REFERENCES Medvirkende(id)
+CREATE TABLE TaskContributorJunction (
+    task INTEGER NOT NULL,
+    contributor INTEGER NOT NULL,
+    PRIMARY KEY (task, contributor),
+    FOREIGN KEY (task) REFERENCES Oppgave(id),
+    FOREIGN KEY (contributor) REFERENCES Contributor(id)
 );
