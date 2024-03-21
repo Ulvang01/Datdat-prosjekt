@@ -67,7 +67,7 @@ def main():
                 continue
             for play in plays:
                 count = Ticket.get_amount_by_play_and_date(cursor, play.id, inp.split(' ')[1])
-                print(f'Dato: {inp.split(" ")[1]}, {play.navn}, Solgte billetter={count[0]}')
+                print(f'Dato: {inp.split(" ")[1]}, {play.name}, Solgte billetter={count[0]}')
         elif inp.split(' ')[0] == 'getBestsellingScreening':
             best_play = Screening.get_bestselling(cursor)
             print("Best selling screening is: ", best_play[0].play.name, " at ", best_play[0].date, ".")
