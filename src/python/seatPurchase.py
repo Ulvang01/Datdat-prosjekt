@@ -13,7 +13,7 @@ def isValidDate(date: str) -> bool:
     return True
 
 def isValidPlay(cursor: sqlite3.Cursor, play: str) -> bool:
-    if len(Play.get_by_name(play)).fetchall() == 0:
+    if Play.get_by_name(cursor, play) == None:
         print("No play of that name")
         return False
     return True
@@ -77,7 +77,7 @@ def getFreeSeats(cursor: sqlite3.Cursor, nameOfPlay: str, date: str, shouldPrint
     if not isValidDate(date):
         return
     date = datetime.date(int(date[:4]), int(date[5:7]), int(date[8:]))
-    
+    print(date)
     if not isValidPlay(cursor, nameOfPlay):
         return
     if not isPlayOnDate(cursor, date, nameOfPlay):
@@ -86,7 +86,7 @@ def getFreeSeats(cursor: sqlite3.Cursor, nameOfPlay: str, date: str, shouldPrint
     query = '''
     SELECT Row.id, COUNT(Chair.id) FROM Chair JOIN Ticket ON Chair.id = Ticket.chair 
         RIGHT OUTER JOIN Row ON Chair.row = Row.id
-            JOIN Screening ON Ticket.visning = Screening.id 
+            JOIN Screening ON Ticket.screening = Screening.id 
                 JOIN Play ON Screening.play = Play.id
                     WHERE Screening.date = ? AND Play.name = ?
         GROUP BY Row.id
