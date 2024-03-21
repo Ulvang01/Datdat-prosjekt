@@ -2,6 +2,7 @@ from typing import List
 
 import datetime
 import sqlite3
+import re
 
 def concatinateStingList(stringList: List[str]) -> str:
     string = ''
@@ -47,3 +48,7 @@ def getFreeSeats(cursor: sqlite3.Cursor, play: List[str], date: str) -> None:
                 break
         freeSeats = row[3] - ticketsTaken
         print(f"Row: {row[1]} Free Seats: {freeSeats}")
+
+def makeCustomerProfile(name: str, phoneNr: str, address: str):
+    if not re.match("[0-9]+", phoneNr):
+        print("Invalid phone number, phone number must be a number")
