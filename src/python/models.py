@@ -334,6 +334,22 @@ class Teaterstykket():
         if teaterstykket:
             return Teaterstykket(teaterstykket[0], teaterstykket[1], teaterstykket[2], teaterstykket[3], teaterstykket[4])
         return None
+    
+    @staticmethod
+    def get_plays_on_date(cursor: sqlite3.Cursor, date: str):
+        query = """
+        SELECT * FROM Teaterstykket WHERE id = (
+          SELECT (teaterstykket) from Visning WHERE dato = ?
+        )
+        """
+        cursor.execute(query, (date,))
+        rows = cursor.fetchall()
+        plays = []
+        if rows:
+            for row in rows:
+                plays.append(Teaterstykket(row[0], row[1], row[2], row[3], row[4]))
+            return plays
+        return None
 
 
 class Visning():
@@ -654,7 +670,18 @@ class Billett():
         ON CONFLICT(visning, stol, pris, kjøp) DO NOTHING
         """
         values = [(billett.visning.id, billett.stol.id, billett.billettPris.id, billett.billettKjøp.id) for billett in billett_list]
-        cursor.executemany(query, values)    
+        cursor.executemany(query, values)  
+
+    @staticmethod
+    def get_amount_by_play_and_date(cursor: sqlite3.Cursor, id: int, date: str):
+        query = """
+        SELECT COUNT(*) FROM Billett 
+        JOIN Visning ON Billett.visning = Visning.id 
+        WHERE Visning.teaterstykket = ? AND Visning.dato = ?
+        """  
+        cursor.execute(query, (id, date,))
+        count = cursor.fetchone()
+        return count if count else None
 
 class Akt():
     def __init__(self, id: int, nummer: int, teaterstykket: Teaterstykket, navn: str = None):
@@ -723,7 +750,26 @@ class Akt():
         """
         values = [(akt.nummer, akt.navn, akt.teaterstykket.id) for akt in akt_list]
         cursor.executemany(query, values)
-        
+    
+    @staticmethod
+    def get_acts_by_actor(cursor: sqlite3.Cursor, name: str):
+        query = """
+        SELECT * FROM Akt WHERE id = (
+          SELECT (akt) FROM RolleAkterJunction WHERE rolle = (
+            SELECT (rolle) FROM SkuespillerRolleJunction WHERE skuespiller = (
+              SELECT (id) FROM Skuespiller WHERE navn = ?
+            )
+          )
+        )
+        """
+        cursor.execute(query, (name,))
+        rows = cursor.fetchall()
+        acts = []
+        if rows:
+            for row in rows:
+                acts.append(Akt(row[0], row[1], row[3], row[2]))
+            return acts
+        return None
 
 class Skuespiller():
     id: int
@@ -812,9 +858,29 @@ class Skuespiller():
                 actors.append(Skuespiller(row[0], row[1]))
             return actors
         return None
-
-
-
+    
+    @staticmethod
+    def get_actors_by_act(cursor: sqlite3.Cursor, actId: int):
+        query = """
+        SELECT Skuespiller.navn, Teaterstykket.navn FROM Skuespiller 
+        LEFT OUTER JOIN SkuespillerRolleJunction 
+          ON Skuespiller.id = SkuespillerRolleJunction.skuespiller
+        LEFT OUTER JOIN RolleAkterJunction
+          ON SkuespillerRolleJunction.rolle = RolleAkterJunction.rolle
+        LEFT OUTER JOIN Akt
+          ON RolleAkterJunction.akt = Akt.id
+        LEFT OUTER JOIN Teaterstykket
+          ON Akt.teaterstykket = Teaterstykket.id
+        WHERE RolleAkterJunction.akt = ?
+        """
+        cursor.execute(query, (actId,))
+        rows = cursor.fetchall()
+        actors = []
+        if rows:
+            for row in rows:
+                actors.append((f'Skuespiller={row[0]} Teaterstykket={row[1]}'))
+            return actors
+        return None
     
 class Roller():
     id: int
