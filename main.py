@@ -42,13 +42,31 @@ def main():
             conn.commit()
 
         elif inp.split(' ')[0] == 'getActorsByPlay': 
-            play = Play.get_by_name(cursor, inp.split(' ')[1])
-            if not play:
-                print('Play does not exist.')
+            query = """
+            SELECT
+                p.name AS Play,
+                a.name AS Actor,
+                r.name AS Role
+            FROM
+                Play p
+            JOIN Act act ON p.id = act.play
+            JOIN RoleActJunction raj ON act.id = raj.act
+            JOIN Role r ON raj.role = r.id
+            JOIN ActorRoleJunction arj ON r.id = arj.role
+            JOIN Actor a ON arj.actor = a.id
+            WHERE
+                p.name = ?
+            GROUP BY
+                p.name, a.name, r.name
+            ORDER BY
+                a.name, r.name;
+            """
+            result = cursor.execute(query, (inp.split(' ')[1],)).fetchall()
+            if not result:
+                print('No actors found for given play.')
                 continue
-            actors = Actor.get_all_by_play(cursor, play.id)
-            for actor in actors: 
-                print(actor.__str__())
+            for row in result:
+                print(f'Teaterstykke={row[0]}, Skuespiller={row[1]}, Rolle={row[2]}')
 
         elif inp.split(' ')[0] == 'getActorConnections':
             acts = Act.get_acts_by_actor(cursor, inp.split(' ', 1)[1])
@@ -68,6 +86,7 @@ def main():
             for play in plays:
                 count = Ticket.get_amount_by_play_and_date(cursor, play.id, inp.split(' ')[1])
                 print(f'Dato: {inp.split(" ")[1]}, {play.name}, Solgte billetter={count[0]}')
+
         elif inp.split(' ')[0] == 'getBestsellingScreening':
             best_play = Screening.get_bestselling(cursor)
             print("Best selling screening is: ", best_play[0].play.name, " at ", best_play[0].date, ".")
