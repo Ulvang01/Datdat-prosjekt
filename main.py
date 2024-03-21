@@ -6,7 +6,7 @@ from src.python.verifyDB import verifyDB
 from src.python.verifyScenes import verifyScenes
 from src.python.verifyMedvirkende import verifyMedvirkendeAndStatus
 from src.python.verifyTickets import verifyTickets
-from src.python.models import Skuespiller, Teaterstykket, Visning
+from src.python.models import Skuespiller, Teaterstykket, Visning, Billett
 
 database = os.path.join("src", "sql", "database.db")
 
@@ -47,7 +47,8 @@ def main():
                 print('No plays on given date. Date format should be yyyy-mm-dd.')
                 continue
             for play in plays:
-                print(play.__str__())
+                count = Billett.get_amount_by_play(cursor, play.id)
+                print(play, f'(Solgte_billetter={count})')
         if inp.split(' ')[0] == 'getBestsellingScreening':
             best_play = Visning.get_bestselling(cursor)
             print("Best selling screening is: ", best_play[0].teaterstykket.navn, " at ", best_play[0].dato, ".")

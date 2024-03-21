@@ -670,7 +670,21 @@ class Billett():
         ON CONFLICT(visning, stol, pris, kjøp) DO NOTHING
         """
         values = [(billett.visning.id, billett.stol.id, billett.billettPris.id, billett.billettKjøp.id) for billett in billett_list]
-        cursor.executemany(query, values)    
+        cursor.executemany(query, values)  
+
+    @staticmethod
+    def get_amount_by_play(cursor: sqlite3.Cursor, id: int):
+        query = """
+        SELECT COUNT(*) FROM Billett WHERE visning = (
+          SELECT (id) FROM Visning WHERE teaterstykket = (
+            SELECT (id) FROM Teaterstykket WHERE id = ?
+          )
+        )
+        """  
+        cursor.execute(query, (id,))
+        count = cursor.fetchone()
+        print(count)
+        return count if count else None
 
 class Akt():
     def __init__(self, id: int, nummer: int, teaterstykket: Teaterstykket, navn: str = None):

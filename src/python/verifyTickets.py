@@ -71,7 +71,7 @@ def verifyHovedscenePurchase(cursor: sqlite3.Cursor, user: KundeProfil) -> None:
     areas = Område.get_by_sal(cursor, sal)
     areaName = ""
     for line in hovedsceneLines:
-        if not re.match("\d", line):
+        if not re.match(r"\d", line):
             areaName = line.strip()
             break
     
@@ -83,7 +83,7 @@ def verifyHovedscenePurchase(cursor: sqlite3.Cursor, user: KundeProfil) -> None:
     
     tickets = []
     for lineIndex in range(len(hovedsceneLines)):
-        if not re.match("\d", hovedsceneLines[lineIndex]):
+        if not re.match(r"\d", hovedsceneLines[lineIndex]):
             break
         
         #print("raden:", lineIndex+1)
@@ -121,7 +121,7 @@ def verifyGamlescenePurchase(cursor: sqlite3.Cursor, user: KundeProfil) -> None:
     sortedAreas = []
     print(areas)
     for line in gamlesceneLines:
-        if not re.match("\d", line):
+        if not re.match(r"\d", line):
             for area in areas:
                 if line.strip() == area.navn:
                     sortedAreas.append(area)
@@ -132,7 +132,7 @@ def verifyGamlescenePurchase(cursor: sqlite3.Cursor, user: KundeProfil) -> None:
     tickets = []
     for line in gamlesceneLines:
         rowNr += 1
-        if not re.match("\d", line):
+        if not re.match(r"\d", line):
             areaIndex += 1
             rowNr = 0
             continue
