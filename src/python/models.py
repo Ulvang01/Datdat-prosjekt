@@ -181,7 +181,6 @@ class Row:
         ON CONFLICT(row_num, area) DO NOTHING
         """
         values = [(row.row_num, row.area.id) for row in row_list]
-        print(values)
         cursor.executemany(query, values)
 
 class Chair:
@@ -219,6 +218,17 @@ class Chair:
             row = Row.get_by_id(cursor, row[2]) 
             if row:
                 return Chair(row[0], row[1], row)
+        return None
+    
+    @staticmethod
+    def get_by_row_and_num(cursor: sqlite3.Cursor, row: Row, chair_num: int) -> Optional['Chair']:
+        query = "SELECT * FROM Chair WHERE row = ? AND chair_num = ?"
+        cursor.execute(query, (row.id, chair_num))
+        row = cursor.fetchone()
+        if row:
+            chari_row = Row.get_by_id(cursor, row[2])
+            if row:
+                return Chair(row[0], row[1], chari_row)
         return None
 
     @staticmethod
@@ -303,6 +313,13 @@ class Play():
         if row:
             return Play(int(row[0]), row[1], row[2], row[4], row[3])
         return None
+    
+    def get_by_scene(cursor: sqlite3.Cursor, scene: Scene) -> Optional['Play']:
+        query = "SELECT * FROM Play WHERE scene = ?"
+        cursor.execute(query, (scene.name,))
+        row = cursor.fetchone()
+        play = Play(row[0], row[1], row[2], row[4], row[3])
+        return play
 
     @staticmethod
     def get_all(cursor: sqlite3.Cursor) -> List['Play']:
@@ -478,6 +495,16 @@ class TicketPrice():
         return None
     
     @staticmethod
+    def get_by_play_and_type(cursor: sqlite3.Cursor, play: Play, ticket_type: str) -> Optional['TicketPrice']:
+        query = "SELECT * FROM TicketPrice WHERE play = ? AND ticket_type = ?"
+        values = (play.id, ticket_type)
+        cursor.execute(query, values)
+        row = cursor.fetchone()
+        if row:
+            return TicketPrice(row[0], row[3], row[1], Play.get_by_id(cursor, row[2]))
+        return None
+
+    @staticmethod
     def get_all(cursor: sqlite3.Cursor) -> List['TicketPrice']:
         query = "SELECT * FROM TicketPrice"
         cursor.execute(query)
@@ -511,6 +538,7 @@ class CustomerProfile():
         query = """
         INSERT INTO CustomerProfile (id, name, adress, telephone_num) VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO NOTHING
+        ON CONFLICT(adress) DO NOTHING
         """
         cursor.execute(query, (self.id, self.name, self.adress, self.telephone_num))
     
@@ -531,6 +559,15 @@ class CustomerProfile():
     def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['CustomerProfile']:
         query = "SELECT * FROM CustomerProfile WHERE id = ?"
         cursor.execute(query, (id,))
+        row = cursor.fetchone()
+        if row:
+            return CustomerProfile(row[0], row[1], row[2], row[3])
+        return None
+    
+    @staticmethod
+    def get_by_name_and_address(cursor: sqlite3.Cursor, name: str, adress: str) -> Optional['CustomerProfile']:
+        query = "SELECT * FROM CustomerProfile WHERE name = ? AND adress = ?"
+        cursor.execute(query, (name, adress))
         row = cursor.fetchone()
         if row:
             return CustomerProfile(row[0], row[1], row[2], row[3])
@@ -587,6 +624,15 @@ class TicketPurchase():
     def get_by_id(cursor: sqlite3.Cursor, id: int) -> Optional['TicketPurchase']:
         query = "SELECT * FROM TicketPurchase WHERE id = ?"
         cursor.execute(query, (id,))
+        row = cursor.fetchone()
+        if row:
+            return TicketPurchase(row[0], row[1], row[2], CustomerProfile.get_by_id(cursor, row[3]))
+        return None
+    
+    @staticmethod
+    def get_by_time_date_and_customer(cursor: sqlite3.Cursor, time: str, date: datetime.date, customer: CustomerProfile) -> Optional['TicketPurchase']:
+        query = "SELECT * FROM TicketPurchase WHERE time = ? AND date = ? AND customer = ?"
+        cursor.execute(query, (time, date, customer.id))
         row = cursor.fetchone()
         if row:
             return TicketPurchase(row[0], row[1], row[2], CustomerProfile.get_by_id(cursor, row[3]))
@@ -1230,7 +1276,6 @@ class Contributor():
         row = cursor.fetchone()
         if row:
             status = EmployeeStatus(row[3])
-            print("heelo")
             return Contributor(row[0], row[1], row[2], status)
         return None
     

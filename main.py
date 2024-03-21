@@ -5,6 +5,7 @@ from src.python.verifyPlays import verifyPlays
 from src.python.verifyDB import verifyDB
 from src.python.verifyScenes import verifyScenes
 from src.python.verifyContributors import verifyContributorsAndStatus
+from src.python.verifyTickets import verifyTickets
 from src.python.models import Act, Actor, Play, Screening, Ticket
 
 database = os.path.join("src", "sql", "database.db")
@@ -30,6 +31,7 @@ def main():
             verifyScenes(conn)
             verifyPlays(conn)
             verifyContributorsAndStatus(conn)
+            verifyTickets(conn)
             conn.commit()
         elif inp.split(' ')[0] == 'getActorsByPlay': 
             play = Play.get_by_name(cursor, inp.split(' ')[1])
